@@ -338,7 +338,7 @@
 
         <div id="submission-form">
             <h3 class="text-lg font-black text-slate-800 mb-1">Choose your house</h3>
-            <p class="text-[10px] text-slate-400 font-bold uppercase mb-4">Add your score to the board</p>
+            <p class="text-[10px] text-slate-400 font-bold uppercase mb-4">Contribution to the leaderboard</p>
             <input type="text" id="player-name" placeholder="Runner Name" maxlength="12">
             <div class="team-grid">
                 <button class="team-btn btn-caroline" onclick="selectTeam('Caroline', this)">Caroline</button>
@@ -414,7 +414,7 @@
 
     const RUN_URL = "https://raw.githubusercontent.com/eiflagnay/RunTheresianRun/refs/heads/main/RunningTheresian.webp";
     const JUMP_IMG_URL = "https://raw.githubusercontent.com/eiflagnay/RunTheresianRun/refs/heads/main/JumpTheresianJump.png";
-    const JUMP_SOUND_URL = "https://raw.githubusercontent.com/eiflagnay/RunTheresianRun/main/JumpSFX.wav";
+    const JUMP_SOUND_URL = "https://raw.githubusercontent.com/eiflagnay/RunTheresianRun/refs/heads/main/JumpSFX.wav";
     const BG_MUSIC_URL = "https://raw.githubusercontent.com/eiflagnay/RunTheresianRun/main/KeepRunning.mp3";
 
     // --- GLOBALS ---
@@ -422,6 +422,7 @@
     let lastTime = 0, uiUpdateCounter = 0, nextMarkerMetres = 150, user = null, authReady = false;
     let selectedTeam = "", musicEnabled = true, sfxEnabled = true;
     const GROUND_Y_OFFSET = 120, GRAVITY = 0.65, JUMP_FORCE = -15.5;
+    const MILESTONES = [400, 1000, 2000, 2400, 3000]; // Defined globally
 
     // Parallax Logic
     let parallaxState = {
@@ -456,7 +457,6 @@
     const getDistanceText = (dist) => {
         if (dist >= 1000) {
             const kmValue = dist / 1000;
-            // Show .x only if not a whole number
             return (kmValue % 1 === 0 ? kmValue : kmValue.toFixed(1)) + "km";
         }
         return Math.floor(dist) + "m";
@@ -512,7 +512,8 @@
             this.vy += GRAVITY * dt;
             this.altitude -= this.vy * dt;
             if (this.altitude <= 0) {
-                this.altitude = 0; this.vy = 0;
+                this.altitude = 0;
+                this.vy = 0;
                 if (this.isJumping) { this.isJumping = false; playerImg.src = RUN_URL; }
             }
             this.sync();
@@ -659,12 +660,6 @@
         const cappedDt = Math.min(dt, 3);
         player.update(cappedDt);
 
-        // Continuous Speed Scaling Logic
-        if (gameState !== 'INTERMISSION') {
-            gameSpeed = 7.0 + (score / 180); // Restored faster ramp up
-            if (gameSpeed > 22) gameSpeed = 22; // Higher cap for more difficulty
-        }
-
         // Parallax updates synced to current speed
         parallaxState.clouds.x -= gameSpeed * parallaxState.clouds.speed * cappedDt;
         if (parallaxState.clouds.x <= -parallaxState.clouds.spacing) parallaxState.clouds.x += parallaxState.clouds.spacing;
@@ -683,22 +678,29 @@
             if (intermissionTimer <= 0) { 
                 currentLevel++; gameState = 'PLAYING'; 
                 intermissionOverlay.style.opacity = '0'; 
-                nextMarkerMetres = score + 100;
+                nextMarkerMetres = score + 120;
             }
             return;
         }
 
+        // Continuous Speed Scaling Logic
+        gameSpeed = 7.0 + (score / 180);
+        if (gameSpeed > 22) gameSpeed = 22;
+
         // Speed Streak updates above 400m
-        if (score > 400) {
+        if (score > 300) {
             particles.forEach(p => p.update(cappedDt));
         }
 
         score += (gameSpeed * 0.15) * cappedDt;
         if (++uiUpdateCounter >= 5) { scoreVal.textContent = getDistanceText(score); uiUpdateCounter = 0; }
         
-        const MILESTONES = [400, 1000, 2000, 2400, 3000];
-        if (currentLevel <= MILESTONES.length && score >= MILESTONES[currentLevel-1] && obstacles.every(o => o.x < -100)) {
-            gameState = 'INTERMISSION'; intermissionTimer = 180; intermissionOverlay.style.opacity = '1';
+        // Milestone Check (Robust detection)
+        if (currentLevel <= MILESTONES.length && score >= MILESTONES[currentLevel-1]) {
+            gameState = 'INTERMISSION'; 
+            intermissionTimer = 180; 
+            intermissionOverlay.style.opacity = '1';
+            obstacles = []; // Clear current obstacles to ensure intermission triggers visuals immediately
             let statusEl = document.getElementById('level-status');
             
             if (MILESTONES[currentLevel-1] === 3000) {
@@ -713,7 +715,7 @@
 
         // Dynamic obstacle spawning (Gaps tighten significantly after 3km)
         const preview = (canvas.width / gameSpeed) * (gameSpeed * 0.15);
-        if (score + preview >= nextMarkerMetres && !obstacles.some(o => o.x > canvas.width - 150)) {
+        if (score + preview >= nextMarkerMetres && !obstacles.some(o => o.x > canvas.width - 200)) {
             obstacles.push(new Obstacle(nextMarkerMetres));
             
             // Tight gap for consecutive jumping after 3km
@@ -743,17 +745,24 @@
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         const groundY = Math.round(canvas.height - GROUND_Y_OFFSET);
         
-        // Parallax
+        // Clouds Parallax
         ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
-        for (let x = parallaxState.clouds.x; x < canvas.width + parallaxState.clouds.spacing; x += parallaxState.clouds.spacing) {
+        for (let x = (parallaxState.clouds.x % parallaxState.clouds.spacing) - parallaxState.clouds.spacing; x < canvas.width + parallaxState.clouds.spacing; x += parallaxState.clouds.spacing) {
             ctx.beginPath(); ctx.arc(x, 100, 25, 0, 7); ctx.arc(x+20, 90, 30, 0, 7); ctx.arc(x+45, 100, 25, 0, 7); ctx.fill();
         }
-        for (let x = parallaxState.trees.x; x < canvas.width + parallaxState.trees.spacing; x += parallaxState.trees.spacing) {
-            ctx.fillStyle = '#78350f'; ctx.fillRect(Math.round(x + 10), groundY - 40, 10, 40);
-            ctx.fillStyle = '#22c55e'; ctx.beginPath(); ctx.moveTo(x - 20, groundY - 40); ctx.lineTo(x + 15, groundY - 80); ctx.lineTo(x + 50, groundY - 40); ctx.fill();
+
+        // Trees Parallax (Mathematically correct looping)
+        for (let x = (parallaxState.trees.x % parallaxState.trees.spacing) - parallaxState.trees.spacing; x < canvas.width + parallaxState.trees.spacing; x += parallaxState.trees.spacing) {
+            const rx = Math.round(x);
+            ctx.fillStyle = '#78350f'; ctx.fillRect(rx + 10, groundY - 40, 10, 40);
+            ctx.fillStyle = '#22c55e';
+            ctx.beginPath(); ctx.moveTo(rx - 20, groundY - 40); ctx.lineTo(rx + 15, groundY - 80); ctx.lineTo(rx + 50, groundY - 40); ctx.fill();
         }
-        ctx.strokeStyle = 'rgba(203, 213, 225, 0.4)'; ctx.lineWidth = 1;
-        for (let x = (parallaxState.floor.x % parallaxState.floor.spacing); x < canvas.width + parallaxState.floor.spacing; x += parallaxState.floor.spacing) {
+
+        // Floor Lines Depth Parallax
+        ctx.strokeStyle = 'rgba(203, 213, 225, 0.4)';
+        ctx.lineWidth = 1;
+        for (let x = (parallaxState.floor.x % parallaxState.floor.spacing) - parallaxState.floor.spacing; x < canvas.width + parallaxState.floor.spacing; x += parallaxState.floor.spacing) {
             ctx.beginPath(); ctx.moveTo(x, groundY); ctx.lineTo(x - 80, canvas.height); ctx.stroke();
         }
 
