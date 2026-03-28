@@ -153,7 +153,7 @@
             transition: opacity 0.5s;
         }
 
-        #level-status { font-size: 2.2rem; font-weight: 900; color: #0ea5e9; text-transform: uppercase; margin-bottom: 0.5rem; text-align: center; max-width: 90%; line-height: 1.1; }
+        #level-status { font-size: 2rem; font-weight: 900; color: #0ea5e9; text-transform: uppercase; margin-bottom: 0.5rem; text-align: center; max-width: 90%; line-height: 1.1; }
         #countdown { font-size: 1.5rem; font-weight: 900; color: #ef4444; }
 
         input#player-name {
@@ -247,7 +247,7 @@
     <div class="animate-bounce mb-6 text-sky-600">
         <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
     </div>
-    <h2 class="text-2xl font-black text-slate-800 mb-2 uppercase">Landscape Required</h2>
+    <h2 class="text-2xl font-black text-slate-800 mb-2 uppercase text-balance">Landscape Required</h2>
     <p class="text-slate-500 italic">Please rotate your device to race!</p>
 </div>
 
@@ -257,9 +257,9 @@
             <div class="logo-section">
                 <img src="https://www.chijsttheresasconvent.moe.edu.sg/images/logo.png" alt="Logo" class="main-logo w-32 mx-auto mb-4 drop-shadow-md">
                 <h1 class="text-3xl font-black text-slate-800 mb-1">Run Theresian Run</h1>
-                <p class="text-slate-500 mb-2 italic text-sm">Cross Country Virtual Marathon 2026</p>
-                <div id="loader-text" class="text-sky-600 font-bold animate-pulse mb-4 text-sm text-center uppercase">Initializing...</div>
-                <div id="auth-error-msg" class="hidden text-red-500 text-xs font-bold mb-4 px-4 text-center leading-tight">Firebase Login Failed!</div>
+                <p class="text-slate-500 mb-2 italic text-sm text-balance">Cross Country Virtual Marathon 2026</p>
+                <div id="loader-text" class="text-sky-600 font-bold animate-pulse mb-4 text-sm text-center uppercase">Initializing Track...</div>
+                <div id="auth-error-msg" class="hidden text-red-500 text-xs font-bold mb-4 px-4 text-center leading-tight text-balance">Firebase Login Failed! Check Console.</div>
             </div>
             
             <div id="menu-actions" class="hidden flex flex-col gap-2 w-full buttons-section">
@@ -414,7 +414,7 @@
 
     const RUN_URL = "https://raw.githubusercontent.com/eiflagnay/RunTheresianRun/refs/heads/main/RunningTheresian.webp";
     const JUMP_IMG_URL = "https://raw.githubusercontent.com/eiflagnay/RunTheresianRun/refs/heads/main/JumpTheresianJump.png";
-    const JUMP_SOUND_URL = "https://raw.githubusercontent.com/eiflagnay/RunTheresianRun/refs/heads/main/JumpSFX.wav";
+    const JUMP_SOUND_URL = "https://raw.githubusercontent.com/eiflagnay/RunTheresianRun/main/JumpSFX.wav";
     const BG_MUSIC_URL = "https://raw.githubusercontent.com/eiflagnay/RunTheresianRun/main/KeepRunning.mp3";
 
     // --- GLOBALS ---
@@ -451,6 +451,16 @@
     jumpSound.crossOrigin = "anonymous";
     const bgMusic = new Audio(BG_MUSIC_URL);
     bgMusic.crossOrigin = "anonymous"; bgMusic.loop = true; bgMusic.volume = 0.4;
+
+    // --- UTILITY ---
+    const getDistanceText = (dist) => {
+        if (dist >= 1000) {
+            const kmValue = dist / 1000;
+            // Show .x only if not a whole number
+            return (kmValue % 1 === 0 ? kmValue : kmValue.toFixed(1)) + "km";
+        }
+        return Math.floor(dist) + "m";
+    };
 
     // --- PARTICLE CLASS ---
     class SpeedStreak {
@@ -512,8 +522,8 @@
 
     class Obstacle {
         constructor(label) {
-            this.text = Math.round(label) + "m";
-            this.color = label >= 2400 ? "#8b5cf6" : (label >= 1000 ? "#10b981" : "#0ea5e9");
+            this.text = getDistanceText(label);
+            this.color = label >= 3000 ? "#f43f5e" : (label >= 1000 ? "#10b981" : "#0ea5e9");
             this.width = 80; this.height = 40;
             this.x = canvas.width;
             this.y_from_bottom = GROUND_Y_OFFSET + this.height;
@@ -586,13 +596,13 @@
                 const best = allRuns[0];
                 document.getElementById('mvp-name').innerText = best.name || "Runner";
                 document.getElementById('mvp-team').innerText = best.team || "---";
-                document.getElementById('mvp-dist').innerText = Math.floor(best.distance || 0) + "m";
+                document.getElementById('mvp-dist').innerText = getDistanceText(best.distance || 0);
                 if (teamColorMap[best.team]) document.getElementById('mvp-card').style.backgroundColor = teamColorMap[best.team];
             }
             list.innerHTML = teams.map(t => `
                 <div class="leaderboard-row">
                     <span style="color: ${teamColorMap[t.id] || 'inherit'}">${t.id}</span>
-                    <span>${Math.floor(t.totalDistance || 0)}m</span>
+                    <span>${getDistanceText(t.totalDistance || 0)}</span>
                 </div>
             `).join('');
         } catch (e) { list.innerHTML = `<p class="text-red-500 text-center text-xs">Offline</p>`; }
@@ -651,8 +661,8 @@
 
         // Continuous Speed Scaling Logic
         if (gameState !== 'INTERMISSION') {
-            gameSpeed = 7.0 + (score / 220); // Faster ramp up
-            if (gameSpeed > 18) gameSpeed = 18; // High cap for extreme challenge
+            gameSpeed = 7.0 + (score / 180); // Restored faster ramp up
+            if (gameSpeed > 22) gameSpeed = 22; // Higher cap for more difficulty
         }
 
         // Parallax updates synced to current speed
@@ -670,7 +680,11 @@
             const sec = Math.ceil(intermissionTimer / 60);
             if (sec > 0 && countdownEl) countdownEl.textContent = `Resume in ${sec}`;
             else if (countdownEl) countdownEl.textContent = "Go!";
-            if (intermissionTimer <= 0) { currentLevel++; gameState = 'PLAYING'; intermissionOverlay.style.opacity = '0'; nextMarkerMetres = score + 120; }
+            if (intermissionTimer <= 0) { 
+                currentLevel++; gameState = 'PLAYING'; 
+                intermissionOverlay.style.opacity = '0'; 
+                nextMarkerMetres = score + 100;
+            }
             return;
         }
 
@@ -680,36 +694,46 @@
         }
 
         score += (gameSpeed * 0.15) * cappedDt;
-        if (++uiUpdateCounter >= 5) { scoreVal.textContent = Math.floor(score) + "m"; uiUpdateCounter = 0; }
+        if (++uiUpdateCounter >= 5) { scoreVal.textContent = getDistanceText(score); uiUpdateCounter = 0; }
         
         const MILESTONES = [400, 1000, 2000, 2400, 3000];
         if (currentLevel <= MILESTONES.length && score >= MILESTONES[currentLevel-1] && obstacles.every(o => o.x < -100)) {
             gameState = 'INTERMISSION'; intermissionTimer = 180; intermissionOverlay.style.opacity = '1';
-            document.getElementById('level-status').textContent = MILESTONES[currentLevel-1] + "m Cleared";
+            let statusEl = document.getElementById('level-status');
+            
+            if (MILESTONES[currentLevel-1] === 3000) {
+                statusEl.textContent = "3km Cleared. NO MORE BREAKS!";
+                statusEl.style.color = "#f43f5e";
+            } else {
+                statusEl.textContent = getDistanceText(MILESTONES[currentLevel-1]) + " Cleared";
+                statusEl.style.color = "#0ea5e9";
+            }
             return;
         }
 
-        // Dynamic obstacle spawning (Gaps tighten as speed increases)
+        // Dynamic obstacle spawning (Gaps tighten significantly after 3km)
         const preview = (canvas.width / gameSpeed) * (gameSpeed * 0.15);
-        if (score + preview >= nextMarkerMetres && !obstacles.some(o => o.x > canvas.width - 200)) {
+        if (score + preview >= nextMarkerMetres && !obstacles.some(o => o.x > canvas.width - 150)) {
             obstacles.push(new Obstacle(nextMarkerMetres));
-            // Gap decreases from 220m down to 140m based on speed
-            const baseGap = Math.max(140, 220 - (gameSpeed * 2));
-            nextMarkerMetres += baseGap + Math.random() * 150;
+            
+            // Tight gap for consecutive jumping after 3km
+            let baseGap = 200 - (gameSpeed * 2);
+            if (score >= 3000) baseGap = Math.max(90, 160 - (gameSpeed * 3));
+            
+            nextMarkerMetres += baseGap + Math.random() * 100;
         }
 
         obstacles.forEach((o, i) => {
             o.update(cappedDt);
             const oy = canvas.height - GROUND_Y_OFFSET - o.height;
             const py = canvas.height - GROUND_Y_OFFSET - player.height - player.altitude;
-            // Tight collision box
             if (player.x + 35 < o.x + o.width && player.x + 65 > o.x && py + 80 > oy) {
                 gameState = 'GAMEOVER'; playerImg.style.display = 'none';
                 globalSettings.classList.remove('locked');
                 document.getElementById('live-stats').classList.add('hidden');
                 gameOverScreen.classList.remove('hidden');
-                document.getElementById('final-grade-text').innerText = Math.floor(score) + "m";
-                document.getElementById('final-score-rank').innerText = score < 400 ? "Novice" : score < 1000 ? "Warm up" : score < 2000 ? "Runner" : "Elite";
+                document.getElementById('final-grade-text').innerText = getDistanceText(score);
+                document.getElementById('final-score-rank').innerText = score < 400 ? "Novice" : score < 1000 ? "Warm up" : score < 2400 ? "Runner" : "Elite";
             }
             if (o.x < -200) obstacles.splice(i, 1);
         });
@@ -719,33 +743,26 @@
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         const groundY = Math.round(canvas.height - GROUND_Y_OFFSET);
         
-        // Clouds Parallax
+        // Parallax
         ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
         for (let x = parallaxState.clouds.x; x < canvas.width + parallaxState.clouds.spacing; x += parallaxState.clouds.spacing) {
             ctx.beginPath(); ctx.arc(x, 100, 25, 0, 7); ctx.arc(x+20, 90, 30, 0, 7); ctx.arc(x+45, 100, 25, 0, 7); ctx.fill();
         }
-
-        // Trees Parallax (Fixed looping logic)
         for (let x = parallaxState.trees.x; x < canvas.width + parallaxState.trees.spacing; x += parallaxState.trees.spacing) {
-            const rx = Math.round(x);
-            ctx.fillStyle = '#78350f'; ctx.fillRect(rx + 10, groundY - 40, 10, 40);
-            ctx.fillStyle = '#22c55e';
-            ctx.beginPath(); ctx.moveTo(rx - 20, groundY - 40); ctx.lineTo(rx + 15, groundY - 80); ctx.lineTo(rx + 50, groundY - 40); ctx.fill();
+            ctx.fillStyle = '#78350f'; ctx.fillRect(Math.round(x + 10), groundY - 40, 10, 40);
+            ctx.fillStyle = '#22c55e'; ctx.beginPath(); ctx.moveTo(x - 20, groundY - 40); ctx.lineTo(x + 15, groundY - 80); ctx.lineTo(x + 50, groundY - 40); ctx.fill();
         }
-
-        // Floor Lines Depth Parallax
-        ctx.strokeStyle = 'rgba(203, 213, 225, 0.4)';
-        ctx.lineWidth = 1;
+        ctx.strokeStyle = 'rgba(203, 213, 225, 0.4)'; ctx.lineWidth = 1;
         for (let x = (parallaxState.floor.x % parallaxState.floor.spacing); x < canvas.width + parallaxState.floor.spacing; x += parallaxState.floor.spacing) {
             ctx.beginPath(); ctx.moveTo(x, groundY); ctx.lineTo(x - 80, canvas.height); ctx.stroke();
         }
 
-        // Speed Streak Particles (Only draw above Level 2)
-        if (score > 400 && (gameState === 'PLAYING' || gameState === 'INTERMISSION')) {
+        // Speed Streak Particles
+        if (score > 300 && (gameState === 'PLAYING' || gameState === 'INTERMISSION')) {
             particles.forEach(p => p.draw());
         }
 
-        // Clean 2px Ground Line
+        // Ground Line (Fixed 2px)
         ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 2;
         ctx.beginPath(); ctx.moveTo(0, groundY); ctx.lineTo(canvas.width, groundY); ctx.stroke();
         
@@ -775,11 +792,8 @@
     window.addEventListener('mousedown', handle); window.addEventListener('touchstart', handle);
 
     const checkOrientation = () => {
-        if (window.innerHeight > window.innerWidth && window.innerWidth <= 1024) {
-            orientationNotice.style.display = 'flex';
-        } else {
-            orientationNotice.style.display = 'none';
-        }
+        if (window.innerHeight > window.innerWidth && window.innerWidth <= 1024) orientationNotice.style.display = 'flex';
+        else orientationNotice.style.display = 'none';
     };
 
     window.addEventListener('resize', () => {
@@ -790,8 +804,7 @@
     });
 
     window.onload = () => { 
-        canvas.width = window.innerWidth; 
-        canvas.height = window.innerHeight; 
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight; 
         player.reset(); checkOrientation(); draw(); 
     };
 </script>
