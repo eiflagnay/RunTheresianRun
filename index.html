@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Run Theresian Run - Cross Country 2026</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -13,10 +13,10 @@
             margin: 0;
             overflow: hidden;
             background-color: #f0f9ff;
-            /* Prevents rubber-banding on mobile */
             position: fixed;
             width: 100%;
             height: 100%;
+            touch-action: none;
         }
 
         #game-container {
@@ -76,7 +76,6 @@
             max-height: 95vh;
             overflow-y: auto;
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05);
-            scrollbar-width: thin;
         }
 
         .menu-content-wrapper {
@@ -87,7 +86,7 @@
         }
 
         @media (max-height: 500px) {
-            .menu-card { padding: 1rem 1.5rem; border-radius: 1.5rem; width: 520px !important; }
+            .menu-card { padding: 1rem 1.5rem; border-radius: 1.5rem; width: 540px !important; }
             .menu-content-wrapper { flex-direction: row !important; justify-content: space-between; gap: 1.5rem; text-align: left; }
             .logo-section { flex: 0.8; display: flex; flex-direction: column; align-items: center; justify-content: center; }
             .buttons-section { flex: 1.2; width: 100%; }
@@ -95,10 +94,9 @@
             .menu-card p { font-size: 0.65rem !important; margin-bottom: 0.2rem !important; }
             .menu-card .main-logo { width: 80px !important; margin-bottom: 0.25rem !important; }
             .btn { padding: 0.35rem 0.8rem !important; font-size: 0.65rem !important; margin-bottom: 0.2rem; }
-            .stats-container, .settings-container { top: 8px !important; }
             #final-grade-text { font-size: 2rem !important; }
             .team-grid { gap: 0.25rem !important; }
-            .team-btn { padding: 0.35rem !important; font-size: 0.6rem !important; }
+            .team-btn { padding: 0.3rem !important; font-size: 0.55rem !important; min-height: 32px !important; }
         }
 
         .btn {
@@ -117,11 +115,11 @@
         }
 
         .btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #0369a1; }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
         .btn-secondary { background: #f8fafc; color: #64748b; box-shadow: 0 4px 0 #cbd5e1; border: 1px solid #e2e8f0; }
 
         .stats-container { position: absolute; top: 20px; left: 20px; display: flex; gap: 10px; pointer-events: none; }
-        .settings-container { position: absolute; top: 20px; right: 20px; display: flex; gap: 10px; z-index: 100; }
+        .settings-container { position: absolute; top: 20px; right: 20px; display: flex; gap: 10px; z-index: 100; transition: opacity 0.3s; }
+        .settings-container.locked { opacity: 0; pointer-events: none; }
 
         .stat-box, .audio-toggle {
             background: rgba(255,255,255,0.9);
@@ -134,7 +132,6 @@
         }
 
         .audio-toggle { cursor: pointer; pointer-events: auto; transition: all 0.2s; }
-        .audio-toggle:active { transform: scale(0.9); }
         .audio-toggle.muted { opacity: 0.4; }
 
         .stat-label { font-size: 0.6rem; text-transform: uppercase; color: #64748b; font-weight: 700; }
@@ -172,7 +169,6 @@
             color: #1e293b;
             background-color: #f8fafc;
         }
-        input#player-name:focus { border-color: #0ea5e9; background-color: #ffffff; }
 
         .team-grid {
             display: grid;
@@ -192,23 +188,16 @@
             transition: all 0.2s;
             text-transform: uppercase;
             opacity: 0.8;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             min-height: 40px;
         }
-
-        .team-btn:hover { opacity: 1; }
 
         .team-btn.selected {
             transform: scale(1.08);
             opacity: 1;
             border-color: #1e293b;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            z-index: 5;
         }
 
-        /* House Colors */
         .btn-caroline { background-color: #0ea5e9; }
         .btn-catherine { background-color: #eab308; color: #1e293b; }
         .btn-ignatius { background-color: #ef4444; }
@@ -233,7 +222,6 @@
             padding: 1rem;
             border-radius: 1.25rem;
             margin-bottom: 1.5rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
             text-align: left;
             transition: background-color 0.5s ease;
         }
@@ -241,36 +229,25 @@
         #orientation-notice {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #ffffff;
-            z-index: 9999;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            padding: 20px;
-        }
-        @media (orientation: portrait) and (max-width: 1024px) {
-            #orientation-notice { display: flex; }
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #ffffff; z-index: 9999;
+            flex-direction: column; justify-content: center; align-items: center;
+            text-align: center; padding: 20px;
         }
     </style>
 </head>
 <body>
 
-<!-- Preloader Section -->
 <div style="display:none">
     <img src="https://raw.githubusercontent.com/eiflagnay/RunTheresianRun/refs/heads/main/RunningTheresian.webp" alt="pre">
     <img src="https://raw.githubusercontent.com/eiflagnay/RunTheresianRun/refs/heads/main/JumpTheresianJump.png" alt="pre">
 </div>
 
 <div id="orientation-notice">
-    <div class="animate-bounce mb-6">
-        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+    <div class="animate-bounce mb-6 text-sky-600">
+        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
     </div>
-    <h2 class="text-2xl font-black text-slate-800 mb-2">LANDSCAPE MODE REQUIRED</h2>
+    <h2 class="text-2xl font-black text-slate-800 mb-2 uppercase">Landscape Required</h2>
     <p class="text-slate-500 italic">Please rotate your device to race!</p>
 </div>
 
@@ -278,15 +255,15 @@
     <div class="menu-card">
         <div class="menu-content-wrapper">
             <div class="logo-section">
-                <img src="https://www.chijsttheresasconvent.moe.edu.sg/images/logo.png" alt="Run Theresian Run Logo" class="main-logo w-32 mx-auto mb-4 drop-shadow-md">
+                <img src="https://www.chijsttheresasconvent.moe.edu.sg/images/logo.png" alt="Logo" class="main-logo w-32 mx-auto mb-4 drop-shadow-md">
                 <h1 class="text-3xl font-black text-slate-800 mb-1">Run Theresian Run</h1>
                 <p class="text-slate-500 mb-2 italic text-sm">Cross Country Virtual Marathon 2026</p>
-                <div id="loader-text" class="text-sky-600 font-bold animate-pulse mb-4 text-sm text-center">CONNECTING...</div>
-                <div id="auth-error-msg" class="hidden text-red-500 text-xs font-bold mb-4 px-4 text-center">Enable "Anonymous Auth" in Firebase Console!</div>
+                <div id="loader-text" class="text-sky-600 font-bold animate-pulse mb-4 text-sm text-center uppercase">Initializing...</div>
+                <div id="auth-error-msg" class="hidden text-red-500 text-xs font-bold mb-4 px-4 text-center leading-tight">Firebase Login Failed!</div>
             </div>
             
             <div id="menu-actions" class="hidden flex flex-col gap-2 w-full buttons-section">
-                <button class="btn text-sm" onclick="startGame()">START RACE</button>
+                <button class="btn text-sm" id="start-btn-main" onclick="startGame()">START RACE</button>
                 <button class="btn btn-secondary text-sm" onclick="showLeaderboard()">LEADERBOARD</button>
                 <button class="btn btn-secondary text-sm" onclick="showInstructions()">HOW TO PLAY</button>
                 <button class="btn btn-secondary text-sm" onclick="showCredits()">CREDITS</button>
@@ -297,8 +274,7 @@
 
 <div class="ui-overlay hidden" id="leaderboard-screen">
     <div class="menu-card">
-        <h2 class="text-xl font-black text-slate-800 mb-4 border-b pb-2 text-center">MARATHON LEADERS</h2>
-        
+        <h2 class="text-xl font-black text-slate-800 mb-4 border-b pb-2 text-center uppercase">Marathon Leaders</h2>
         <div id="best-runner-section">
             <div class="best-runner-card" id="mvp-card">
                 <p class="text-[10px] font-black uppercase opacity-80 mb-1">Best Runner</p>
@@ -311,26 +287,23 @@
                 </div>
             </div>
         </div>
-
-        <p class="text-[10px] text-slate-400 font-black uppercase mb-2 text-left">Team Rankings</p>
-        <div id="leaderboard-list" class="mb-6 space-y-2">
-            <p class="text-slate-400 italic text-center">Fetching standings...</p>
-        </div>
+        <p class="text-[10px] text-slate-400 font-black uppercase mb-2 text-left">Team Standings</p>
+        <div id="leaderboard-list" class="mb-6 space-y-2"></div>
         <button class="btn btn-secondary text-sm" onclick="showMainMenu()">BACK</button>
     </div>
 </div>
 
 <div class="ui-overlay hidden" id="instructions-screen">
     <div class="menu-card">
-        <h2 class="text-xl font-black text-slate-800 mb-4 border-b pb-2 text-center">RACE RULES</h2>
+        <h2 class="text-xl font-black text-slate-800 mb-4 border-b pb-2 text-center uppercase">Race Rules</h2>
         <div class="text-left space-y-4 mb-6">
             <div class="flex gap-3 items-start">
                 <div class="bg-sky-100 p-2 rounded-lg text-sky-600 shrink-0">🏃</div>
-                <div><p class="font-bold text-slate-800 text-sm">Jump to Dodge</p><p class="text-xs text-slate-500">Tap screen or press <b>SPACE</b> to leap over distance markers.</p></div>
+                <div><p class="font-bold text-slate-800 text-sm">Jump to Dodge</p><p class="text-xs text-slate-500">Tap screen or press <b>SPACE</b> to leap over obstacles.</p></div>
             </div>
             <div class="flex gap-3 items-start">
                 <div class="bg-amber-100 p-2 rounded-lg text-amber-600 shrink-0">🏅</div>
-                <div><p class="font-bold text-slate-800 text-sm">Team Effort</p><p class="text-xs text-slate-500">Submit your distance to your team's total at the end of the race!</p></div>
+                <div><p class="font-bold text-slate-800 text-sm">Team Effort</p><p class="text-xs text-slate-500">Submit your distance to help your house win!</p></div>
             </div>
         </div>
         <button class="btn btn-secondary text-sm" onclick="showMainMenu()">GOT IT</button>
@@ -338,8 +311,8 @@
 </div>
 
 <div class="ui-overlay hidden" id="credits-screen">
-    <div class="menu-card">
-        <h2 class="text-xl font-black text-slate-800 mb-4 border-b pb-2 text-center">CREDITS</h2>
+    <div class="menu-card text-center">
+        <h2 class="text-xl font-black text-slate-800 mb-4 border-b pb-2 text-center uppercase">Credits</h2>
         <div class="text-center space-y-4 mb-6">
             <div>
                 <p class="text-[10px] font-black text-slate-400 uppercase mb-1">Developer</p>
@@ -347,7 +320,6 @@
             </div>
             <div>
                 <p class="text-[10px] font-black text-slate-400 uppercase mb-1">Feedback & Support</p>
-                <p class="text-xs text-slate-500 mb-1">Encountered a bug?</p>
                 <a href="mailto:alfie_yang@moe.edu.sg" class="text-sky-600 font-black underline text-sm">alfie_yang@moe.edu.sg</a>
             </div>
         </div>
@@ -357,7 +329,7 @@
 
 <div class="ui-overlay hidden" id="game-over">
     <div class="menu-card">
-        <h2 class="text-2xl font-bold text-slate-800 mb-1 text-center">Race Result</h2>
+        <h2 class="text-2xl font-bold text-slate-800 mb-1 text-center uppercase">Race Result</h2>
         <div id="final-grade-container" class="mb-4 text-center border-b pb-4">
             <p class="text-[10px] text-slate-400 font-bold uppercase mb-1">Final Distance</p>
             <div id="final-grade-text" class="text-5xl font-black mb-1 text-sky-600">0m</div>
@@ -366,10 +338,8 @@
 
         <div id="submission-form">
             <h3 class="text-lg font-black text-slate-800 mb-1">Choose your house</h3>
-            <p class="text-[10px] text-slate-400 font-bold uppercase mb-4">Pick your house to contribute to the leaderboard</p>
-            
+            <p class="text-[10px] text-slate-400 font-bold uppercase mb-4">Add your score to the board</p>
             <input type="text" id="player-name" placeholder="Runner Name" maxlength="12">
-            
             <div class="team-grid">
                 <button class="team-btn btn-caroline" onclick="selectTeam('Caroline', this)">Caroline</button>
                 <button class="team-btn btn-catherine" onclick="selectTeam('Catherine', this)">Catherine</button>
@@ -378,7 +348,6 @@
                 <button class="team-btn btn-joseph" onclick="selectTeam('Joseph', this)">Joseph</button>
                 <button class="team-btn btn-marie" onclick="selectTeam('Marie', this)">Marie</button>
             </div>
-            
             <button class="btn text-xs py-3 mb-4" id="submit-btn" onclick="submitToLeaderboard()">SUBMIT RECORD</button>
         </div>
 
@@ -393,7 +362,7 @@
 
 <div id="game-container">
     <canvas id="gameCanvas"></canvas>
-    <img id="player-gif" src="https://raw.githubusercontent.com/eiflagnay/RunTheresianRun/refs/heads/main/RunningTheresian.webp" alt="Ollie">
+    <img id="player-gif" src="https://raw.githubusercontent.com/eiflagnay/RunTheresianRun/refs/heads/main/RunningTheresian.webp" alt="Character">
     
     <div id="intermission-overlay">
         <div id="level-status">Stage Cleared</div>
@@ -401,16 +370,14 @@
     </div>
 
     <div class="settings-container" id="global-settings">
-        <div class="audio-toggle" id="toggle-fullscreen-btn" title="Fullscreen" onclick="toggleFullScreen()">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-sky-600"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
-        </div>
-        <div class="audio-toggle" id="toggle-music-btn" title="Music" onclick="toggleMusic()">
+        <div class="audio-toggle" onclick="toggleFullScreen()"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-sky-600"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg></div>
+        <div class="audio-toggle" onclick="toggleMusic()">
             <svg id="music-on-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-sky-600"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
-            <svg id="music-off-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-slate-400 hidden"><line x1="2" y1="2" x2="22" y2="22"></line><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+            <svg id="music-off-icon" class="text-slate-400 hidden" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="2" y1="2" x2="22" y2="22"></line><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
         </div>
-        <div class="audio-toggle" id="toggle-sfx-btn" title="SFX" onclick="toggleSFX()">
-            <svg id="sfx-on-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-sky-600"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
-            <svg id="sfx-off-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-slate-400 hidden"><line x1="2" y1="2" x2="22" y2="22"></line><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon></svg>
+        <div class="audio-toggle" onclick="toggleSFX()">
+            <svg id="sfx-on-icon" class="text-sky-600" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
+            <svg id="sfx-off-icon" class="text-slate-400 hidden" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="2" y1="2" x2="22" y2="22"></line><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon></svg>
         </div>
     </div>
 
@@ -435,91 +402,35 @@
       measurementId: "G-S19F8GMC1Y"
     };
 
-    const finalConfig = (typeof __firebase_config !== 'undefined' && __firebase_config !== "") ? JSON.parse(__firebase_config) : firebaseConfig;
-    const app = initializeApp(finalConfig);
+    const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
     const appIdStr = 'run-theresian-run-2026';
 
-    let user = null;
-    let authReady = false;
-
-    // Authentication Setup
-    const initAuth = async () => {
-        try {
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                await signInWithCustomToken(auth, __initial_auth_token);
-            } else {
-                await signInAnonymously(auth);
-            }
-            authReady = true;
-        } catch (e) {
-            console.error("Auth failed:", e);
-            const errEl = document.getElementById('auth-error-msg');
-            if (errEl) errEl.classList.remove('hidden');
-        }
-    };
-    
-    initAuth();
-    onAuthStateChanged(auth, u => {
-        user = u;
-        if (u) {
-            const loader = document.getElementById('loader-text');
-            const actions = document.getElementById('menu-actions');
-            if (loader) loader.classList.add('hidden'); 
-            if (actions) actions.classList.remove('hidden'); 
-        }
-    });
-
-    // --- UTILITIES ---
-    const getDistanceText = (dist) => {
-        if (dist >= 1000) return (dist / 1000).toFixed(2) + "km";
-        return Math.floor(dist) + "m";
-    };
-
-    const getSimpleDistanceText = (dist) => {
-        if (dist >= 1000) return (dist / 1000) + "km";
-        return dist + "m";
-    };
-
-    const getRank = (dist) => {
-        if (dist < 400) return "Novice";
-        if (dist < 1000) return "Warm up";
-        if (dist < 2000) return "Runner";
-        if (dist < 2400) return "Competitive";
-        return "Theresian Elite";
-    };
-
     const teamColorMap = {
-        'Caroline': '#0ea5e9',
-        'Catherine': '#eab308',
-        'Ignatius': '#ef4444',
-        'Isabel': '#10b981',
-        'Joseph': '#f97316',
-        'Marie': '#8b5cf6'
+        'Caroline': '#0ea5e9', 'Catherine': '#eab308', 'Ignatius': '#ef4444',
+        'Isabel': '#10b981', 'Joseph': '#f97316', 'Marie': '#8b5cf6'
     };
-
-    // --- GLOBALS ---
-    let animationId, gameState = 'MENU', score = 0, currentLevel = 1, gameSpeed = 6.5, obstacles = [], intermissionTimer = 0;
-    let lastTime = 0, uiUpdateCounter = 0, nextMarkerMetres = 120;
-    let selectedTeam = "", musicEnabled = true, sfxEnabled = true;
-    
-    const CLOUD_SPACING = 600, TREE_SPACING = 380, FLOOR_SPACING = 120;
-    let parallaxLayers = [
-        { x: 0, speed: 0.15, type: 'clouds', spacing: CLOUD_SPACING },
-        { x: 0, speed: 0.6, type: 'trees', spacing: TREE_SPACING },
-        { x: 0, speed: 1.2, type: 'floor', spacing: FLOOR_SPACING }
-    ];
-
-    // --- GAME DATA ---
-    const MILESTONES = [400, 1000, 2000, 2400, 3000, 4000, 5000];
-    const GROUND_Y_OFFSET = 120, GRAVITY = 0.65, JUMP_FORCE = -15.5;
 
     const RUN_URL = "https://raw.githubusercontent.com/eiflagnay/RunTheresianRun/refs/heads/main/RunningTheresian.webp";
     const JUMP_IMG_URL = "https://raw.githubusercontent.com/eiflagnay/RunTheresianRun/refs/heads/main/JumpTheresianJump.png";
     const JUMP_SOUND_URL = "https://raw.githubusercontent.com/eiflagnay/RunTheresianRun/refs/heads/main/JumpSFX.wav";
     const BG_MUSIC_URL = "https://raw.githubusercontent.com/eiflagnay/RunTheresianRun/main/KeepRunning.mp3";
 
+    // --- GLOBALS ---
+    let animationId, gameState = 'MENU', score = 0, currentLevel = 1, gameSpeed = 7.0, obstacles = [], particles = [], intermissionTimer = 0;
+    let lastTime = 0, uiUpdateCounter = 0, nextMarkerMetres = 150, user = null, authReady = false;
+    let selectedTeam = "", musicEnabled = true, sfxEnabled = true;
+    const GROUND_Y_OFFSET = 120, GRAVITY = 0.65, JUMP_FORCE = -15.5;
+
+    // Parallax Logic
+    let parallaxState = {
+        clouds: { x: 0, speed: 0.15, spacing: 600 },
+        trees: { x: 0, speed: 0.5, spacing: 450 },
+        floor: { x: 0, speed: 1.1, spacing: 120 }
+    };
+
+    // DOM References
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     const playerImg = document.getElementById('player-gif');
@@ -529,64 +440,72 @@
     const creditsScreen = document.getElementById('credits-screen');
     const gameOverScreen = document.getElementById('game-over');
     const intermissionOverlay = document.getElementById('intermission-overlay');
-    const liveStats = document.getElementById('live-stats');
     const scoreVal = document.getElementById('score-val');
     const countdownEl = document.getElementById('countdown');
+    const globalSettings = document.getElementById('global-settings');
+    const startBtnMain = document.getElementById('start-btn-main');
+    const liveStats = document.getElementById('live-stats');
+    const orientationNotice = document.getElementById('orientation-notice');
 
     const jumpSound = new Audio(JUMP_SOUND_URL);
     jumpSound.crossOrigin = "anonymous";
     const bgMusic = new Audio(BG_MUSIC_URL);
-    bgMusic.crossOrigin = "anonymous"; bgMusic.loop = true; bgMusic.volume = 0.5;
+    bgMusic.crossOrigin = "anonymous"; bgMusic.loop = true; bgMusic.volume = 0.4;
+
+    // --- PARTICLE CLASS ---
+    class SpeedStreak {
+        constructor() { this.reset(); }
+        reset() {
+            this.x = canvas.width + Math.random() * 800;
+            this.y = 80 + Math.random() * (canvas.height - 250);
+            this.w = 60 + Math.random() * 150;
+            this.h = 1 + Math.random() * 1;
+            this.opacity = 0.05 + Math.random() * 0.15;
+            this.speed = gameSpeed * (2.0 + Math.random() * 1.5);
+        }
+        update(dt) {
+            this.x -= this.speed * dt;
+            if (this.x < -this.w) this.reset();
+        }
+        draw() {
+            ctx.fillStyle = `rgba(14, 165, 233, ${this.opacity})`;
+            ctx.fillRect(Math.round(this.x), Math.round(this.y), this.w, this.h);
+        }
+    }
 
     // --- PLAYER CLASS ---
     class Player {
-        constructor() { 
-            this.width = 100; 
-            this.height = 100; 
-            this.x = 100;
-            this.reset(); 
+        constructor() {
+            this.width = 100; this.height = 100;
+            this.x = 100; this.altitude = 0; this.vy = 0;
+            this.isJumping = false;
         }
         reset() {
-            this.vy = 0; 
-            this.altitude = 0; // Use altitude instead of absolute Y to be resolution-independent
-            this.isJumping = false;
-            this.syncPosition();
+            this.altitude = 0; this.vy = 0; this.isJumping = false;
             playerImg.src = RUN_URL; 
             playerImg.style.display = 'none';
+            this.sync();
         }
-        syncPosition() {
-            // Recalculate Y based on current canvas height + Ollie's altitude
-            const groundY = canvas.height - GROUND_Y_OFFSET - this.height;
-            this.y = groundY - this.altitude;
-            playerImg.style.transform = `translate3d(${Math.round(this.x)}px, ${Math.round(this.y)}px, 0)`;
+        sync() {
+            const groundBaseY = canvas.height - GROUND_Y_OFFSET - this.height;
+            const currentY = groundBaseY - this.altitude;
+            playerImg.style.transform = `translate3d(${Math.round(this.x)}px, ${Math.round(currentY)}px, 0)`;
         }
         jump() {
             if (!this.isJumping && (gameState === 'PLAYING' || gameState === 'INTERMISSION')) {
-                this.vy = JUMP_FORCE; 
-                this.isJumping = true;
+                this.vy = JUMP_FORCE; this.isJumping = true;
                 playerImg.src = JUMP_IMG_URL;
                 if(sfxEnabled) { jumpSound.currentTime = 0; jumpSound.play().catch(()=>{}); }
             }
         }
         update(dt) {
-            if (isNaN(dt)) return;
-            
-            // Physics update
             this.vy += GRAVITY * dt;
             this.altitude -= this.vy * dt;
-
-            // Ground collision
             if (this.altitude <= 0) {
-                this.altitude = 0;
-                this.vy = 0;
-                if (this.isJumping) {
-                    this.isJumping = false;
-                    playerImg.src = RUN_URL;
-                }
+                this.altitude = 0; this.vy = 0;
+                if (this.isJumping) { this.isJumping = false; playerImg.src = RUN_URL; }
             }
-            
-            // Final pixel placement
-            this.syncPosition();
+            this.sync();
             if (playerImg.style.display !== 'block' && (gameState === 'PLAYING' || gameState === 'INTERMISSION')) playerImg.style.display = 'block';
         }
     }
@@ -599,7 +518,7 @@
             this.x = canvas.width;
             this.y_from_bottom = GROUND_Y_OFFSET + this.height;
         }
-        update(dt) { if (!isNaN(dt)) this.x -= gameSpeed * dt; }
+        update(dt) { this.x -= gameSpeed * dt; }
         draw() {
             const rx = Math.round(this.x);
             const ry = Math.round(canvas.height - this.y_from_bottom);
@@ -612,30 +531,26 @@
     }
 
     const player = new Player();
+    for(let i=0; i<15; i++) particles.push(new SpeedStreak());
 
-    // --- INTERFACE FUNCTIONS ---
-    window.selectTeam = (teamName, btnElement) => {
-        selectedTeam = teamName;
-        document.querySelectorAll('.team-btn').forEach(b => b.classList.remove('selected'));
-        if (btnElement) btnElement.classList.add('selected');
-    };
-
+    // --- INTERFACE ---
     window.startGame = async () => {
+        if (!document.fullscreenElement) {
+            try {
+                await document.documentElement.requestFullscreen();
+                startBtnMain.innerText = "START NOW";
+                return;
+            } catch (e) { console.warn("FS denied", e); }
+        }
+
         if (!authReady) await initAuth();
         if (musicEnabled) bgMusic.play().catch(() => {});
-        gameState = 'PLAYING'; score = 0; currentLevel = 1; gameSpeed = 6.5; obstacles = []; player.reset();
-        lastTime = performance.now(); nextMarkerMetres = 120;
-        selectedTeam = "";
-        document.querySelectorAll('.team-btn').forEach(b => b.classList.remove('selected'));
-        document.getElementById('submission-form').classList.remove('hidden');
-        document.getElementById('submission-feedback').classList.add('hidden');
-        document.getElementById('submit-btn').disabled = false;
-        document.getElementById('submit-btn').innerText = "SUBMIT RECORD";
-        mainMenu.classList.add('hidden'); 
-        instructionsScreen.classList.add('hidden');
-        creditsScreen.classList.add('hidden');
-        gameOverScreen.classList.add('hidden'); 
-        leaderboardScreen.classList.add('hidden');
+        
+        gameState = 'PLAYING'; score = 0; currentLevel = 1; gameSpeed = 7.0; obstacles = [];
+        player.reset(); lastTime = performance.now(); nextMarkerMetres = 150;
+        globalSettings.classList.add('locked');
+        
+        [mainMenu, leaderboardScreen, instructionsScreen, creditsScreen, gameOverScreen].forEach(el => el.classList.add('hidden'));
         liveStats.classList.remove('hidden');
         scoreVal.textContent = "0m";
         if (animationId) cancelAnimationFrame(animationId);
@@ -644,251 +559,240 @@
 
     window.showMainMenu = () => {
         gameState = 'MENU';
-        mainMenu.classList.remove('hidden'); 
-        leaderboardScreen.classList.add('hidden');
-        instructionsScreen.classList.add('hidden');
-        creditsScreen.classList.add('hidden');
-        gameOverScreen.classList.add('hidden');
-        liveStats.classList.add('hidden');
-        playerImg.style.display = 'none';
-        obstacles = [];
-        draw();
+        globalSettings.classList.remove('locked');
+        [mainMenu, leaderboardScreen, instructionsScreen, creditsScreen, gameOverScreen].forEach(el => el.classList.add('hidden'));
+        mainMenu.classList.remove('hidden'); liveStats.classList.add('hidden');
+        playerImg.style.display = 'none'; obstacles = []; startBtnMain.innerText = "START RACE"; draw();
     };
 
     window.showLeaderboard = async () => {
         gameState = 'LEADERBOARD';
-        mainMenu.classList.add('hidden');
-        leaderboardScreen.classList.remove('hidden');
+        mainMenu.classList.add('hidden'); leaderboardScreen.classList.remove('hidden');
         const list = document.getElementById('leaderboard-list');
         list.innerHTML = '<p class="text-slate-400 italic text-center">Fetching standings...</p>';
         if (!authReady) await initAuth();
-        if (!user) { list.innerHTML = '<p class="text-red-500 text-center text-xs px-4">Error: Server Connection Failed</p>'; return; }
         try {
             const teamSnapshot = await getDocs(collection(db, 'artifacts', appIdStr, 'public', 'data', 'teamStats'));
             let teams = [];
             teamSnapshot.forEach(doc => teams.push({ id: doc.id, ...doc.data() }));
-            Object.keys(teamColorMap).forEach(teamName => {
-                if(!teams.find(t => t.id === teamName)) teams.push({ id: teamName, totalDistance: 0 });
-            });
+            Object.keys(teamColorMap).forEach(k => { if(!teams.find(t => t.id === k)) teams.push({ id: k, totalDistance: 0 }); });
             teams.sort((a, b) => (b.totalDistance || 0) - (a.totalDistance || 0));
+
             const runsSnapshot = await getDocs(collection(db, 'artifacts', appIdStr, 'public', 'data', 'runs'));
             let allRuns = [];
             runsSnapshot.forEach(doc => allRuns.push(doc.data()));
             if (allRuns.length > 0) {
                 allRuns.sort((a, b) => (b.distance || 0) - (a.distance || 0));
                 const best = allRuns[0];
-                const bestTeamName = best.team || "---";
                 document.getElementById('mvp-name').innerText = best.name || "Runner";
-                document.getElementById('mvp-team').innerText = bestTeamName;
-                document.getElementById('mvp-dist').innerText = getDistanceText(best.distance || 0);
-                if (teamColorMap[bestTeamName]) document.getElementById('mvp-card').style.backgroundColor = teamColorMap[bestTeamName];
-            } else {
-                document.getElementById('mvp-name').innerText = "---";
-                document.getElementById('mvp-team').innerText = "No team yet";
-                document.getElementById('mvp-dist').innerText = "0m";
-                document.getElementById('mvp-card').style.backgroundColor = "#64748b";
+                document.getElementById('mvp-team').innerText = best.team || "---";
+                document.getElementById('mvp-dist').innerText = Math.floor(best.distance || 0) + "m";
+                if (teamColorMap[best.team]) document.getElementById('mvp-card').style.backgroundColor = teamColorMap[best.team];
             }
-            list.innerHTML = teams.map((t) => `
+            list.innerHTML = teams.map(t => `
                 <div class="leaderboard-row">
                     <span style="color: ${teamColorMap[t.id] || 'inherit'}">${t.id}</span>
-                    <span>${getDistanceText(t.totalDistance || 0)}</span>
+                    <span>${Math.floor(t.totalDistance || 0)}m</span>
                 </div>
             `).join('');
-        } catch (e) {
-            list.innerHTML = `<p class="text-red-500 text-center text-xs">Server busy. Try again.</p>`;
-        }
+        } catch (e) { list.innerHTML = `<p class="text-red-500 text-center text-xs">Offline</p>`; }
     };
 
     window.submitToLeaderboard = async () => {
-        const nameInput = document.getElementById('player-name');
-        const name = nameInput ? nameInput.value.trim() : "";
+        const name = document.getElementById('player-name').value.trim();
+        if (!name || !selectedTeam) return;
         const btn = document.getElementById('submit-btn');
-        const feedback = document.getElementById('submission-feedback');
-        if (!name || !selectedTeam) {
-            feedback.classList.remove('hidden');
-            feedback.innerHTML = `<div class="text-red-500 text-xs font-bold">Please enter name and select house!</div>`;
-            return;
-        }
-        if (!authReady) await initAuth();
-        btn.disabled = true;
-        btn.innerText = "SUBMITTING...";
+        btn.disabled = true; btn.innerText = "SAVING...";
         try {
-            const teamRef = doc(db, 'artifacts', appIdStr, 'public', 'data', 'teamStats', selectedTeam);
-            await setDoc(teamRef, { totalDistance: increment(score) }, { merge: true });
-            const runRef = doc(collection(db, 'artifacts', appIdStr, 'public', 'data', 'runs'));
-            await setDoc(runRef, { name, team: selectedTeam, distance: score, timestamp: Date.now() });
+            await setDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'teamStats', selectedTeam), { totalDistance: increment(score) }, { merge: true });
+            await setDoc(doc(collection(db, 'artifacts', appIdStr, 'public', 'data', 'runs')), { name, team: selectedTeam, distance: score, timestamp: Date.now() });
             document.getElementById('submission-form').classList.add('hidden');
+            const feedback = document.getElementById('submission-feedback');
             feedback.classList.remove('hidden');
-            feedback.innerHTML = `<div class="bg-green-100 text-green-700 p-4 rounded-xl font-bold text-center text-xs">Successfully added to ${selectedTeam}!</div>`;
-        } catch (e) {
-            btn.disabled = false; btn.innerText = "RETRY SUBMISSION";
-        }
+            feedback.innerHTML = `<div class="bg-green-100 text-green-700 p-4 rounded-xl font-bold text-center text-xs">Added to House ${selectedTeam}!</div>`;
+        } catch (e) { btn.disabled = false; btn.innerText = "RETRY"; }
+    };
+
+    window.selectTeam = (teamName, btn) => {
+        selectedTeam = teamName;
+        document.querySelectorAll('.team-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
     };
 
     window.toggleMusic = () => {
+        if (gameState === 'PLAYING') return;
         musicEnabled = !musicEnabled;
         document.getElementById('music-on-icon').classList.toggle('hidden', !musicEnabled);
         document.getElementById('music-off-icon').classList.toggle('hidden', musicEnabled);
-        if (musicEnabled) bgMusic.play().catch(() => {}); else bgMusic.pause();
+        if (musicEnabled) bgMusic.play().catch(()=>{}); else bgMusic.pause();
     };
 
     window.toggleSFX = () => {
+        if (gameState === 'PLAYING') return;
         sfxEnabled = !sfxEnabled;
         document.getElementById('sfx-on-icon').classList.toggle('hidden', !sfxEnabled);
         document.getElementById('sfx-off-icon').classList.toggle('hidden', sfxEnabled);
     };
 
     window.toggleFullScreen = () => {
-        if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen().catch(() => {});
-        } else {
-            document.exitFullscreen().catch(() => {});
-        }
+        if (gameState === 'PLAYING') return;
+        if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{});
+        else document.exitFullscreen().catch(()=>{});
     };
 
     window.showInstructions = () => { gameState = 'INSTRUCTIONS'; mainMenu.classList.add('hidden'); instructionsScreen.classList.remove('hidden'); };
     window.showCredits = () => { gameState = 'CREDITS'; mainMenu.classList.add('hidden'); creditsScreen.classList.remove('hidden'); };
 
     // --- GAME ENGINE ---
-    const startIntermission = () => {
-        gameState = 'INTERMISSION'; intermissionTimer = 180; intermissionOverlay.style.opacity = '1';
-        let targetDist = MILESTONES[currentLevel - 1];
-        let statusEl = document.getElementById('level-status');
-        if (targetDist === 5000) {
-            statusEl.textContent = "continue running, dont stop, theres no more break";
-            statusEl.style.fontSize = "1.25rem";
-        } else {
-            statusEl.textContent = `${getSimpleDistanceText(targetDist)} cleared`;
-            statusEl.style.fontSize = "2.2rem";
-        }
-        countdownEl.textContent = "resume running in 3";
-    };
-
-    const gameOver = () => {
-        gameState = 'GAMEOVER';
-        liveStats.classList.add('hidden');
-        gameOverScreen.classList.remove('hidden');
-        playerImg.style.display = 'none';
-        document.getElementById('final-grade-text').innerText = Math.floor(score) + "m";
-        document.getElementById('final-score-rank').innerText = getRank(score);
-    };
-
     function update(dt) {
         if (['MENU', 'CREDITS', 'INSTRUCTIONS', 'LEADERBOARD', 'GAMEOVER'].includes(gameState)) return;
         const cappedDt = Math.min(dt, 3);
         player.update(cappedDt);
-        parallaxLayers.forEach(layer => {
-            layer.x -= gameSpeed * layer.speed * cappedDt;
-            if (layer.x <= -layer.spacing) layer.x += layer.spacing;
-        });
+
+        // Continuous Speed Scaling Logic
+        if (gameState !== 'INTERMISSION') {
+            gameSpeed = 7.0 + (score / 220); // Faster ramp up
+            if (gameSpeed > 18) gameSpeed = 18; // High cap for extreme challenge
+        }
+
+        // Parallax updates synced to current speed
+        parallaxState.clouds.x -= gameSpeed * parallaxState.clouds.speed * cappedDt;
+        if (parallaxState.clouds.x <= -parallaxState.clouds.spacing) parallaxState.clouds.x += parallaxState.clouds.spacing;
+        
+        parallaxState.trees.x -= gameSpeed * parallaxState.trees.speed * cappedDt;
+        if (parallaxState.trees.x <= -parallaxState.trees.spacing) parallaxState.trees.x += parallaxState.trees.spacing;
+        
+        parallaxState.floor.x -= gameSpeed * parallaxState.floor.speed * cappedDt;
+        if (parallaxState.floor.x <= -parallaxState.floor.spacing) parallaxState.floor.x += parallaxState.floor.spacing;
+
         if (gameState === 'INTERMISSION') {
             intermissionTimer -= cappedDt;
-            const secondsLeft = Math.ceil(intermissionTimer / 60);
-            if (secondsLeft > 0 && countdownEl) countdownEl.textContent = `resume running in ${secondsLeft}`;
-            else if (countdownEl) countdownEl.textContent = "Run!";
-            if (intermissionTimer <= 0) { 
-                currentLevel++; gameState = 'PLAYING'; 
-                intermissionOverlay.style.opacity = '0'; 
-                nextMarkerMetres = score + 100;
-            }
+            const sec = Math.ceil(intermissionTimer / 60);
+            if (sec > 0 && countdownEl) countdownEl.textContent = `Resume in ${sec}`;
+            else if (countdownEl) countdownEl.textContent = "Go!";
+            if (intermissionTimer <= 0) { currentLevel++; gameState = 'PLAYING'; intermissionOverlay.style.opacity = '0'; nextMarkerMetres = score + 120; }
             return;
         }
-        if (score < 400) gameSpeed = 6.0;
-        else if (score < 1000) gameSpeed = 8.5;
-        else if (score < 2000) gameSpeed = 10.5;
-        else if (score < 2400) gameSpeed = 13.0;
-        else if (score < 5000) gameSpeed = 14.5;
-        else gameSpeed = 16.0 + ((score - 5000) / 1000) * 1.5; 
+
+        // Speed Streak updates above 400m
+        if (score > 400) {
+            particles.forEach(p => p.update(cappedDt));
+        }
+
         score += (gameSpeed * 0.15) * cappedDt;
-        if (++uiUpdateCounter >= 5) { scoreVal.textContent = getDistanceText(score); uiUpdateCounter = 0; }
-        if (currentLevel <= MILESTONES.length) {
-            let targetDist = MILESTONES[currentLevel - 1];
-            const obstaclesCleared = obstacles.length === 0 || obstacles.every(o => o.x < -150);
-            if (score >= targetDist && obstaclesCleared) { startIntermission(); return; }
+        if (++uiUpdateCounter >= 5) { scoreVal.textContent = Math.floor(score) + "m"; uiUpdateCounter = 0; }
+        
+        const MILESTONES = [400, 1000, 2000, 2400, 3000];
+        if (currentLevel <= MILESTONES.length && score >= MILESTONES[currentLevel-1] && obstacles.every(o => o.x < -100)) {
+            gameState = 'INTERMISSION'; intermissionTimer = 180; intermissionOverlay.style.opacity = '1';
+            document.getElementById('level-status').textContent = MILESTONES[currentLevel-1] + "m Cleared";
+            return;
         }
-        const arrivalPreview = (canvas.width / gameSpeed) * (gameSpeed * 0.15);
-        if (score + arrivalPreview >= nextMarkerMetres) {
-            if (!(obstacles.length > 0 && obstacles[obstacles.length-1].x > canvas.width - 350)) {
-                let minGap = 120, maxGap = 300;
-                if (score < 400) { minGap = 200; maxGap = 400; }
-                else if (score < 1000) { minGap = 100; maxGap = 200; }
-                else if (score >= 5000) { minGap = 80; maxGap = 250; }
-                let targetDist = MILESTONES[currentLevel - 1] || 999999;
-                if (currentLevel > MILESTONES.length || nextMarkerMetres < targetDist) {
-                    obstacles.push(new Obstacle(nextMarkerMetres));
-                    nextMarkerMetres += Math.round((minGap + Math.random() * (maxGap - minGap)) / 10) * 10;
-                }
+
+        // Dynamic obstacle spawning (Gaps tighten as speed increases)
+        const preview = (canvas.width / gameSpeed) * (gameSpeed * 0.15);
+        if (score + preview >= nextMarkerMetres && !obstacles.some(o => o.x > canvas.width - 200)) {
+            obstacles.push(new Obstacle(nextMarkerMetres));
+            // Gap decreases from 220m down to 140m based on speed
+            const baseGap = Math.max(140, 220 - (gameSpeed * 2));
+            nextMarkerMetres += baseGap + Math.random() * 150;
+        }
+
+        obstacles.forEach((o, i) => {
+            o.update(cappedDt);
+            const oy = canvas.height - GROUND_Y_OFFSET - o.height;
+            const py = canvas.height - GROUND_Y_OFFSET - player.height - player.altitude;
+            // Tight collision box
+            if (player.x + 35 < o.x + o.width && player.x + 65 > o.x && py + 80 > oy) {
+                gameState = 'GAMEOVER'; playerImg.style.display = 'none';
+                globalSettings.classList.remove('locked');
+                document.getElementById('live-stats').classList.add('hidden');
+                gameOverScreen.classList.remove('hidden');
+                document.getElementById('final-grade-text').innerText = Math.floor(score) + "m";
+                document.getElementById('final-score-rank').innerText = score < 400 ? "Novice" : score < 1000 ? "Warm up" : score < 2000 ? "Runner" : "Elite";
             }
-        }
-        for (let i = obstacles.length - 1; i >= 0; i--) {
-            obstacles[i].update(cappedDt);
-            const obstacleY = canvas.height - obstacles[i].y_from_bottom;
-            if (player.x + 35 < obstacles[i].x + obstacles[i].width && player.x + player.width - 35 > obstacles[i].x &&
-                player.y + 40 < obstacleY + obstacles[i].height && player.y + player.height > obstacleY) gameOver();
-            if (obstacles[i].x < -300) obstacles.splice(i, 1);
-        }
+            if (o.x < -200) obstacles.splice(i, 1);
+        });
     }
 
     function draw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         const groundY = Math.round(canvas.height - GROUND_Y_OFFSET);
-        parallaxLayers.forEach(layer => {
-            if (layer.type === 'clouds') {
-                for (let x = layer.x; x < canvas.width + CLOUD_SPACING; x += CLOUD_SPACING) {
-                    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
-                    ctx.beginPath(); ctx.arc(x, 120, 25, 0, Math.PI * 2); ctx.arc(x + 20, 110, 30, 0, Math.PI * 2); ctx.arc(x + 45, 120, 25, 0, Math.PI * 2); ctx.fill();
-                }
-            } else if (layer.type === 'trees') {
-                for (let x = layer.x; x < canvas.width + TREE_SPACING; x += TREE_SPACING) {
-                    const ry = groundY - 60;
-                    ctx.fillStyle = '#78350f'; ctx.fillRect(x + 11, ry + 22, 13, 38);
-                    ctx.fillStyle = '#22c55e';
-                    ctx.beginPath(); ctx.moveTo(x - 24, ry + 22); ctx.lineTo(x + 17, ry - 27); ctx.lineTo(x + 59, ry + 22); ctx.fill();
-                }
-            } else if (layer.type === 'floor') {
-                ctx.strokeStyle = 'rgba(203, 213, 225, 0.4)'; ctx.lineWidth = 1;
-                for (let x = (layer.x % FLOOR_SPACING); x < canvas.width + FLOOR_SPACING; x+=FLOOR_SPACING) {
-                    ctx.beginPath(); ctx.moveTo(x, groundY); ctx.lineTo(x - 90, canvas.height); ctx.stroke();
-                }
-            }
-        });
-        ctx.beginPath(); ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 4;
-        ctx.moveTo(0, groundY); ctx.lineTo(canvas.width, groundY); ctx.stroke();
-        if (['PLAYING', 'INTERMISSION', 'GAMEOVER'].includes(gameState)) obstacles.forEach(obs => obs.draw());
-    }
-
-    function gameLoop(timestamp) {
-        if (!lastTime) lastTime = timestamp;
-        const dt = (timestamp - lastTime) / 16.67;
-        lastTime = timestamp;
-        update(dt); draw();
-        if (gameState !== 'MENU' && gameState !== 'INSTRUCTIONS' && gameState !== 'CREDITS' && gameState !== 'LEADERBOARD' && gameState !== 'GAMEOVER') {
-            animationId = requestAnimationFrame(gameLoop);
+        
+        // Clouds Parallax
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+        for (let x = parallaxState.clouds.x; x < canvas.width + parallaxState.clouds.spacing; x += parallaxState.clouds.spacing) {
+            ctx.beginPath(); ctx.arc(x, 100, 25, 0, 7); ctx.arc(x+20, 90, 30, 0, 7); ctx.arc(x+45, 100, 25, 0, 7); ctx.fill();
         }
+
+        // Trees Parallax (Fixed looping logic)
+        for (let x = parallaxState.trees.x; x < canvas.width + parallaxState.trees.spacing; x += parallaxState.trees.spacing) {
+            const rx = Math.round(x);
+            ctx.fillStyle = '#78350f'; ctx.fillRect(rx + 10, groundY - 40, 10, 40);
+            ctx.fillStyle = '#22c55e';
+            ctx.beginPath(); ctx.moveTo(rx - 20, groundY - 40); ctx.lineTo(rx + 15, groundY - 80); ctx.lineTo(rx + 50, groundY - 40); ctx.fill();
+        }
+
+        // Floor Lines Depth Parallax
+        ctx.strokeStyle = 'rgba(203, 213, 225, 0.4)';
+        ctx.lineWidth = 1;
+        for (let x = (parallaxState.floor.x % parallaxState.floor.spacing); x < canvas.width + parallaxState.floor.spacing; x += parallaxState.floor.spacing) {
+            ctx.beginPath(); ctx.moveTo(x, groundY); ctx.lineTo(x - 80, canvas.height); ctx.stroke();
+        }
+
+        // Speed Streak Particles (Only draw above Level 2)
+        if (score > 400 && (gameState === 'PLAYING' || gameState === 'INTERMISSION')) {
+            particles.forEach(p => p.draw());
+        }
+
+        // Clean 2px Ground Line
+        ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(0, groundY); ctx.lineTo(canvas.width, groundY); ctx.stroke();
+        
+        if (['PLAYING', 'INTERMISSION', 'GAMEOVER'].includes(gameState)) obstacles.forEach(o => o.draw());
     }
 
-    const handleAction = (e) => { 
-        if (e && e.target && (e.target.closest('button') || e.target.closest('input') || e.target.closest('select') || e.target.closest('a'))) return; 
-        player.jump(); 
+    function gameLoop(t) {
+        if (!lastTime) lastTime = t;
+        update((t - lastTime) / 16.67); draw(); lastTime = t;
+        if (!['MENU', 'GAMEOVER', 'LEADERBOARD', 'CREDITS', 'INSTRUCTIONS'].includes(gameState)) animationId = requestAnimationFrame(gameLoop);
+    }
+
+    const initAuth = async () => {
+        const t = setTimeout(() => { if (!user) hideLoader(); }, 5000);
+        try {
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token);
+            else await signInAnonymously(auth);
+            authReady = true; clearTimeout(t);
+        } catch (e) { hideLoader(); }
+    };
+    initAuth();
+    onAuthStateChanged(auth, u => { user = u; if (u) hideLoader(); });
+    const hideLoader = () => { document.getElementById('loader-text').classList.add('hidden'); document.getElementById('menu-actions').classList.remove('hidden'); };
+
+    const handle = (e) => { if (e.target.closest('button') || e.target.closest('input')) return; player.jump(); };
+    window.addEventListener('keydown', (e) => { if(e.code === 'Space') player.jump(); });
+    window.addEventListener('mousedown', handle); window.addEventListener('touchstart', handle);
+
+    const checkOrientation = () => {
+        if (window.innerHeight > window.innerWidth && window.innerWidth <= 1024) {
+            orientationNotice.style.display = 'flex';
+        } else {
+            orientationNotice.style.display = 'none';
+        }
     };
 
-    window.addEventListener('keydown', (e) => { if (e.code === 'Space' || e.code === 'ArrowUp') handleAction(); });
-    window.addEventListener('mousedown', handleAction); 
-    window.addEventListener('touchstart', handleAction);
-    
-    // --- SMART RESIZE LOGIC ---
-    window.addEventListener('resize', () => { 
-        canvas.width = window.innerWidth; 
-        canvas.height = window.innerHeight; 
-        player.syncPosition();
-        if (gameState === 'MENU') draw(); 
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+        player.sync(); checkOrientation();
+        if (gameState === 'MENU') draw();
+        setTimeout(() => player.sync(), 150);
     });
-    
+
     window.onload = () => { 
         canvas.width = window.innerWidth; 
         canvas.height = window.innerHeight; 
-        player.reset();
-        draw(); 
+        player.reset(); checkOrientation(); draw(); 
     };
 </script>
 </body>
