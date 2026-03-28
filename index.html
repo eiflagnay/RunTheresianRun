@@ -86,7 +86,7 @@
             .menu-content-wrapper { flex-direction: row !important; justify-content: space-between; gap: 1.5rem; text-align: left; }
             .logo-section { flex: 0.8; display: flex; flex-direction: column; align-items: center; justify-content: center; }
             .buttons-section { flex: 1.2; width: 100%; }
-            .menu-card h1 { font-size: 1.25rem !important; margin-bottom: 0.1rem !important; }
+            .menu-card h1 { font-size: 1.25rem !important; margin-bottom: 0.25rem !important; }
             .menu-card p { font-size: 0.65rem !important; margin-bottom: 0.2rem !important; }
             .menu-card .main-logo { width: 80px !important; margin-bottom: 0.25rem !important; }
             .btn { padding: 0.35rem 0.8rem !important; font-size: 0.65rem !important; margin-bottom: 0.2rem; }
@@ -510,7 +510,7 @@
 
     const RUN_URL = "https://raw.githubusercontent.com/eiflagnay/RunTheresianRun/refs/heads/main/RunningTheresian.webp";
     const JUMP_IMG_URL = "https://raw.githubusercontent.com/eiflagnay/RunTheresianRun/refs/heads/main/JumpTheresianJump.png";
-    const JUMP_SOUND_URL = "https://raw.githubusercontent.com/eiflagnay/RunTheresianRun/main/Jump.mp3";
+    const JUMP_SOUND_URL = "https://raw.githubusercontent.com/eiflagnay/RunTheresianRun/main/JumpSFX.wav";
     const BG_MUSIC_URL = "https://raw.githubusercontent.com/eiflagnay/RunTheresianRun/main/KeepRunning.mp3";
 
     const canvas = document.getElementById('gameCanvas');
@@ -543,15 +543,10 @@
             playerImg.style.width = '100px'; playerImg.style.height = '100px';
         }
         reposition() {
-            // Recalculate vertical position relative to canvas height without hiding Ollie
             const groundY = canvas.height - GROUND_Y_OFFSET - this.height;
             if (!this.isJumping) {
                 this.y = groundY;
-            } else {
-                // If jumping, keep vertical momentum but adjust ground base
-                // We let update() handle the ground clamping in the next tick
             }
-            // Force immediate style sync to prevent "off" animation appearance during resize
             playerImg.style.transform = `translate3d(${Math.round(this.x)}px, ${Math.round(this.y)}px, 0)`;
         }
         jump() {
@@ -857,11 +852,9 @@
     window.addEventListener('mousedown', handleAction); 
     window.addEventListener('touchstart', handleAction);
     
-    // --- SMART RESIZE LOGIC ---
     window.addEventListener('resize', () => { 
         canvas.width = window.innerWidth; 
         canvas.height = window.innerHeight; 
-        // Instead of reset(), we just reposition the current character
         player.reposition();
         if (gameState === 'MENU') draw(); 
     });
