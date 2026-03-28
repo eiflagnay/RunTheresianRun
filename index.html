@@ -89,7 +89,7 @@
             .menu-card h1 { font-size: 1.25rem !important; margin-bottom: 0.1rem !important; }
             .menu-card p { font-size: 0.65rem !important; margin-bottom: 0.2rem !important; }
             .menu-card .main-logo { width: 80px !important; margin-bottom: 0.25rem !important; }
-            .btn { padding: 0.4rem 0.8rem !important; font-size: 0.7rem !important; margin-bottom: 0.3rem; }
+            .btn { padding: 0.35rem 0.8rem !important; font-size: 0.65rem !important; margin-bottom: 0.2rem; }
             .stats-container, .settings-container { top: 8px !important; }
             #final-grade-text { font-size: 2rem !important; }
             .team-grid { gap: 0.25rem !important; }
@@ -280,10 +280,11 @@
                 <div id="auth-error-msg" class="hidden text-red-500 text-xs font-bold mb-4 px-4 text-center">Enable "Anonymous Auth" in Firebase Console!</div>
             </div>
             
-            <div id="menu-actions" class="hidden flex flex-col gap-3 w-full buttons-section">
+            <div id="menu-actions" class="hidden flex flex-col gap-2 w-full buttons-section">
                 <button class="btn text-sm" onclick="startGame()">START RACE</button>
                 <button class="btn btn-secondary text-sm" onclick="showLeaderboard()">LEADERBOARD</button>
                 <button class="btn btn-secondary text-sm" onclick="showInstructions()">HOW TO PLAY</button>
+                <button class="btn btn-secondary text-sm" onclick="showCredits()">CREDITS</button>
             </div>
         </div>
     </div>
@@ -328,6 +329,24 @@
             </div>
         </div>
         <button class="btn btn-secondary text-sm" onclick="showMainMenu()">GOT IT</button>
+    </div>
+</div>
+
+<div class="ui-overlay hidden" id="credits-screen">
+    <div class="menu-card">
+        <h2 class="text-xl font-black text-slate-800 mb-4 border-b pb-2 text-center">CREDITS</h2>
+        <div class="text-center space-y-4 mb-6">
+            <div>
+                <p class="text-[10px] font-black text-slate-400 uppercase mb-1">Developer</p>
+                <p class="text-slate-800 font-black text-lg">Mr Alfie Yang</p>
+            </div>
+            <div>
+                <p class="text-[10px] font-black text-slate-400 uppercase mb-1">Feedback & Support</p>
+                <p class="text-xs text-slate-500 mb-1">Encountered a bug?</p>
+                <a href="mailto:alfie_yang@moe.edu.sg" class="text-sky-600 font-black underline text-sm">alfie_yang@moe.edu.sg</a>
+            </div>
+        </div>
+        <button class="btn btn-secondary text-sm" onclick="showMainMenu()">BACK</button>
     </div>
 </div>
 
@@ -391,7 +410,6 @@
     </div>
 
     <div class="stats-container hidden" id="live-stats">
-        <div class="stat-box"><span class="stat-label">Milestone</span><span class="stat-value" id="level-val">1</span></div>
         <div class="stat-box"><span class="stat-label">Distance</span><span class="stat-value" id="score-val">0m</span></div>
     </div>
 </div>
@@ -503,11 +521,11 @@
     const mainMenu = document.getElementById('main-menu');
     const leaderboardScreen = document.getElementById('leaderboard-screen');
     const instructionsScreen = document.getElementById('instructions-screen');
+    const creditsScreen = document.getElementById('credits-screen');
     const gameOverScreen = document.getElementById('game-over');
     const intermissionOverlay = document.getElementById('intermission-overlay');
     const liveStats = document.getElementById('live-stats');
     const scoreVal = document.getElementById('score-val');
-    const levelVal = document.getElementById('level-val');
     const countdownEl = document.getElementById('countdown');
 
     const jumpSound = new Audio(JUMP_SOUND_URL);
@@ -529,7 +547,7 @@
         jump() {
             if (!this.isJumping && (gameState === 'PLAYING' || gameState === 'INTERMISSION')) {
                 this.vy = JUMP_FORCE; this.isJumping = true;
-                playerImg.src = JUMP_IMG_URL; // Instant source swap
+                playerImg.src = JUMP_IMG_URL;
                 if(sfxEnabled) { jumpSound.currentTime = 0; jumpSound.play().catch(()=>{}); }
             }
         }
@@ -542,7 +560,7 @@
                 this.y = groundY; this.vy = 0;
                 if (this.isJumping) {
                     this.isJumping = false;
-                    playerImg.src = RUN_URL; // Return to run cycle
+                    playerImg.src = RUN_URL;
                 }
             }
             playerImg.style.transform = `translate3d(${Math.round(this.x)}px, ${Math.round(this.y)}px, 0)`;
@@ -572,30 +590,7 @@
 
     const player = new Player();
 
-    // --- GAME FUNCTIONS (Attached to Window for HTML) ---
-    window.startIntermission = () => {
-        gameState = 'INTERMISSION'; intermissionTimer = 180; intermissionOverlay.style.opacity = '1';
-        let targetDist = MILESTONES[currentLevel - 1];
-        let statusEl = document.getElementById('level-status');
-        if (targetDist === 5000) {
-            statusEl.textContent = "continue running, dont stop, theres no more break";
-            statusEl.style.fontSize = "1.25rem";
-        } else {
-            statusEl.textContent = `${getSimpleDistanceText(targetDist)} cleared`;
-            statusEl.style.fontSize = "2.2rem";
-        }
-        countdownEl.textContent = "resume running in 3";
-    };
-
-    window.gameOver = () => {
-        gameState = 'GAMEOVER';
-        liveStats.classList.add('hidden');
-        gameOverScreen.classList.remove('hidden');
-        playerImg.style.display = 'none';
-        document.getElementById('final-grade-text').innerText = Math.floor(score) + "m";
-        document.getElementById('final-score-rank').innerText = getRank(score);
-    };
-
+    // --- INTERFACE FUNCTIONS ---
     window.selectTeam = (teamName, btnElement) => {
         selectedTeam = teamName;
         document.querySelectorAll('.team-btn').forEach(b => b.classList.remove('selected'));
@@ -613,10 +608,13 @@
         document.getElementById('submission-feedback').classList.add('hidden');
         document.getElementById('submit-btn').disabled = false;
         document.getElementById('submit-btn').innerText = "SUBMIT RECORD";
-        mainMenu.classList.add('hidden'); instructionsScreen.classList.add('hidden');
-        gameOverScreen.classList.add('hidden'); leaderboardScreen.classList.add('hidden');
+        mainMenu.classList.add('hidden'); 
+        instructionsScreen.classList.add('hidden');
+        creditsScreen.classList.add('hidden');
+        gameOverScreen.classList.add('hidden'); 
+        leaderboardScreen.classList.add('hidden');
         liveStats.classList.remove('hidden');
-        scoreVal.textContent = "0m"; levelVal.textContent = "1";
+        scoreVal.textContent = "0m";
         if (animationId) cancelAnimationFrame(animationId);
         animationId = requestAnimationFrame(gameLoop);
     };
@@ -626,6 +624,7 @@
         mainMenu.classList.remove('hidden'); 
         leaderboardScreen.classList.add('hidden');
         instructionsScreen.classList.add('hidden');
+        creditsScreen.classList.add('hidden');
         gameOverScreen.classList.add('hidden');
         liveStats.classList.add('hidden');
         playerImg.style.display = 'none';
@@ -731,6 +730,7 @@
     };
 
     window.showInstructions = () => { gameState = 'INSTRUCTIONS'; mainMenu.classList.add('hidden'); instructionsScreen.classList.remove('hidden'); };
+    window.showCredits = () => { gameState = 'CREDITS'; mainMenu.classList.add('hidden'); creditsScreen.classList.remove('hidden'); };
 
     // --- GAME ENGINE ---
     function update(dt) {
@@ -751,7 +751,6 @@
             if (intermissionTimer <= 0) { 
                 currentLevel++; gameState = 'PLAYING'; 
                 intermissionOverlay.style.opacity = '0'; 
-                levelVal.textContent = currentLevel; 
                 nextMarkerMetres = score + 100;
             }
             return;
@@ -770,7 +769,18 @@
         if (currentLevel <= MILESTONES.length) {
             let targetDist = MILESTONES[currentLevel - 1];
             const obstaclesCleared = obstacles.length === 0 || obstacles.every(o => o.x < -150);
-            if (score >= targetDist && obstaclesCleared) { window.startIntermission(); return; }
+            if (score >= targetDist && obstaclesCleared) {
+                gameState = 'INTERMISSION'; intermissionTimer = 180; intermissionOverlay.style.opacity = '1';
+                let statusEl = document.getElementById('level-status');
+                if (targetDist === 5000) {
+                    statusEl.textContent = "continue running, dont stop, theres no more break";
+                    statusEl.style.fontSize = "1.25rem";
+                } else {
+                    statusEl.textContent = `${getSimpleDistanceText(targetDist)} cleared`;
+                    statusEl.style.fontSize = "2.2rem";
+                }
+                return; 
+            }
         }
 
         const arrivalPreview = (canvas.width / gameSpeed) * (gameSpeed * 0.15);
@@ -791,7 +801,14 @@
         for (let i = obstacles.length - 1; i >= 0; i--) {
             obstacles[i].update(cappedDt);
             if (player.x + 35 < obstacles[i].x + obstacles[i].width && player.x + player.width - 35 > obstacles[i].x &&
-                player.y + 40 < obstacles[i].y + obstacles[i].height && player.y + player.height > obstacles[i].y) window.gameOver();
+                player.y + 40 < obstacles[i].y + obstacles[i].height && player.y + player.height > obstacles[i].y) {
+                gameState = 'GAMEOVER';
+                liveStats.classList.add('hidden');
+                gameOverScreen.classList.remove('hidden');
+                playerImg.style.display = 'none';
+                document.getElementById('final-grade-text').innerText = Math.floor(score) + "m";
+                document.getElementById('final-score-rank').innerText = getRank(score);
+            }
             if (obstacles[i].x < -300) obstacles.splice(i, 1);
         }
     }
@@ -829,7 +846,7 @@
         const dt = (timestamp - lastTime) / 16.67;
         lastTime = timestamp;
         update(dt); draw();
-        if (gameState !== 'MENU' && gameState !== 'INSTRUCTIONS' && gameState !== 'LEADERBOARD' && gameState !== 'GAMEOVER') {
+        if (gameState !== 'MENU' && gameState !== 'INSTRUCTIONS' && gameState !== 'CREDITS' && gameState !== 'LEADERBOARD' && gameState !== 'GAMEOVER') {
             animationId = requestAnimationFrame(gameLoop);
         }
     }
