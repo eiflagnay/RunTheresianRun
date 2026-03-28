@@ -13,6 +13,10 @@
             margin: 0;
             overflow: hidden;
             background-color: #f0f9ff;
+            /* Prevents rubber-banding on mobile */
+            position: fixed;
+            width: 100%;
+            height: 100%;
         }
 
         #game-container {
@@ -22,6 +26,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            overflow: hidden;
         }
 
         canvas {
@@ -86,7 +91,7 @@
             .menu-content-wrapper { flex-direction: row !important; justify-content: space-between; gap: 1.5rem; text-align: left; }
             .logo-section { flex: 0.8; display: flex; flex-direction: column; align-items: center; justify-content: center; }
             .buttons-section { flex: 1.2; width: 100%; }
-            .menu-card h1 { font-size: 1.25rem !important; margin-bottom: 0.25rem !important; }
+            .menu-card h1 { font-size: 1.25rem !important; margin-bottom: 0.1rem !important; }
             .menu-card p { font-size: 0.65rem !important; margin-bottom: 0.2rem !important; }
             .menu-card .main-logo { width: 80px !important; margin-bottom: 0.25rem !important; }
             .btn { padding: 0.35rem 0.8rem !important; font-size: 0.65rem !important; margin-bottom: 0.2rem; }
@@ -203,6 +208,7 @@
             z-index: 5;
         }
 
+        /* House Colors */
         .btn-caroline { background-color: #0ea5e9; }
         .btn-catherine { background-color: #eab308; color: #1e293b; }
         .btn-ignatius { background-color: #ef4444; }
@@ -254,6 +260,7 @@
 </head>
 <body>
 
+<!-- Preloader Section -->
 <div style="display:none">
     <img src="https://raw.githubusercontent.com/eiflagnay/RunTheresianRun/refs/heads/main/RunningTheresian.webp" alt="pre">
     <img src="https://raw.githubusercontent.com/eiflagnay/RunTheresianRun/refs/heads/main/JumpTheresianJump.png" alt="pre">
@@ -510,7 +517,7 @@
 
     const RUN_URL = "https://raw.githubusercontent.com/eiflagnay/RunTheresianRun/refs/heads/main/RunningTheresian.webp";
     const JUMP_IMG_URL = "https://raw.githubusercontent.com/eiflagnay/RunTheresianRun/refs/heads/main/JumpTheresianJump.png";
-    const JUMP_SOUND_URL = "https://raw.githubusercontent.com/eiflagnay/RunTheresianRun/main/JumpSFX.wav";
+    const JUMP_SOUND_URL = "https://raw.githubusercontent.com/eiflagnay/RunTheresianRun/refs/heads/main/JumpSFX.wav";
     const BG_MUSIC_URL = "https://raw.githubusercontent.com/eiflagnay/RunTheresianRun/main/KeepRunning.mp3";
 
     const canvas = document.getElementById('gameCanvas');
@@ -533,42 +540,53 @@
 
     // --- PLAYER CLASS ---
     class Player {
-        constructor() { this.reset(); }
+        constructor() { 
+            this.width = 100; 
+            this.height = 100; 
+            this.x = 100;
+            this.reset(); 
+        }
         reset() {
-            this.width = 100; this.height = 100; this.x = 100;
-            this.vy = 0; this.isJumping = false;
-            this.reposition(); // Sets initial this.y
+            this.vy = 0; 
+            this.altitude = 0; // Use altitude instead of absolute Y to be resolution-independent
+            this.isJumping = false;
+            this.syncPosition();
             playerImg.src = RUN_URL; 
             playerImg.style.display = 'none';
-            playerImg.style.width = '100px'; playerImg.style.height = '100px';
         }
-        reposition() {
+        syncPosition() {
+            // Recalculate Y based on current canvas height + Ollie's altitude
             const groundY = canvas.height - GROUND_Y_OFFSET - this.height;
-            if (!this.isJumping) {
-                this.y = groundY;
-            }
+            this.y = groundY - this.altitude;
             playerImg.style.transform = `translate3d(${Math.round(this.x)}px, ${Math.round(this.y)}px, 0)`;
         }
         jump() {
             if (!this.isJumping && (gameState === 'PLAYING' || gameState === 'INTERMISSION')) {
-                this.vy = JUMP_FORCE; this.isJumping = true;
+                this.vy = JUMP_FORCE; 
+                this.isJumping = true;
                 playerImg.src = JUMP_IMG_URL;
                 if(sfxEnabled) { jumpSound.currentTime = 0; jumpSound.play().catch(()=>{}); }
             }
         }
         update(dt) {
             if (isNaN(dt)) return;
+            
+            // Physics update
             this.vy += GRAVITY * dt;
-            this.y += this.vy * dt;
-            const groundY = canvas.height - GROUND_Y_OFFSET - this.height;
-            if (this.y > groundY) {
-                this.y = groundY; this.vy = 0;
+            this.altitude -= this.vy * dt;
+
+            // Ground collision
+            if (this.altitude <= 0) {
+                this.altitude = 0;
+                this.vy = 0;
                 if (this.isJumping) {
                     this.isJumping = false;
                     playerImg.src = RUN_URL;
                 }
             }
-            playerImg.style.transform = `translate3d(${Math.round(this.x)}px, ${Math.round(this.y)}px, 0)`;
+            
+            // Final pixel placement
+            this.syncPosition();
             if (playerImg.style.display !== 'block' && (gameState === 'PLAYING' || gameState === 'INTERMISSION')) playerImg.style.display = 'block';
         }
     }
@@ -579,12 +597,12 @@
             this.color = label >= 2400 ? "#8b5cf6" : (label >= 1000 ? "#10b981" : "#0ea5e9");
             this.width = 80; this.height = 40;
             this.x = canvas.width;
-            this.y = canvas.height - GROUND_Y_OFFSET - this.height;
+            this.y_from_bottom = GROUND_Y_OFFSET + this.height;
         }
         update(dt) { if (!isNaN(dt)) this.x -= gameSpeed * dt; }
         draw() {
             const rx = Math.round(this.x);
-            const ry = Math.round(this.y);
+            const ry = Math.round(canvas.height - this.y_from_bottom);
             ctx.fillStyle = this.color;
             ctx.font = "900 32px 'Outfit'";
             ctx.textAlign = "center";
@@ -732,6 +750,29 @@
     window.showCredits = () => { gameState = 'CREDITS'; mainMenu.classList.add('hidden'); creditsScreen.classList.remove('hidden'); };
 
     // --- GAME ENGINE ---
+    const startIntermission = () => {
+        gameState = 'INTERMISSION'; intermissionTimer = 180; intermissionOverlay.style.opacity = '1';
+        let targetDist = MILESTONES[currentLevel - 1];
+        let statusEl = document.getElementById('level-status');
+        if (targetDist === 5000) {
+            statusEl.textContent = "continue running, dont stop, theres no more break";
+            statusEl.style.fontSize = "1.25rem";
+        } else {
+            statusEl.textContent = `${getSimpleDistanceText(targetDist)} cleared`;
+            statusEl.style.fontSize = "2.2rem";
+        }
+        countdownEl.textContent = "resume running in 3";
+    };
+
+    const gameOver = () => {
+        gameState = 'GAMEOVER';
+        liveStats.classList.add('hidden');
+        gameOverScreen.classList.remove('hidden');
+        playerImg.style.display = 'none';
+        document.getElementById('final-grade-text').innerText = Math.floor(score) + "m";
+        document.getElementById('final-score-rank').innerText = getRank(score);
+    };
+
     function update(dt) {
         if (['MENU', 'CREDITS', 'INSTRUCTIONS', 'LEADERBOARD', 'GAMEOVER'].includes(gameState)) return;
         const cappedDt = Math.min(dt, 3);
@@ -763,18 +804,7 @@
         if (currentLevel <= MILESTONES.length) {
             let targetDist = MILESTONES[currentLevel - 1];
             const obstaclesCleared = obstacles.length === 0 || obstacles.every(o => o.x < -150);
-            if (score >= targetDist && obstaclesCleared) {
-                gameState = 'INTERMISSION'; intermissionTimer = 180; intermissionOverlay.style.opacity = '1';
-                let statusEl = document.getElementById('level-status');
-                if (targetDist === 5000) {
-                    statusEl.textContent = "continue running, dont stop, theres no more break";
-                    statusEl.style.fontSize = "1.25rem";
-                } else {
-                    statusEl.textContent = `${getSimpleDistanceText(targetDist)} cleared`;
-                    statusEl.style.fontSize = "2.2rem";
-                }
-                return; 
-            }
+            if (score >= targetDist && obstaclesCleared) { startIntermission(); return; }
         }
         const arrivalPreview = (canvas.width / gameSpeed) * (gameSpeed * 0.15);
         if (score + arrivalPreview >= nextMarkerMetres) {
@@ -792,15 +822,9 @@
         }
         for (let i = obstacles.length - 1; i >= 0; i--) {
             obstacles[i].update(cappedDt);
+            const obstacleY = canvas.height - obstacles[i].y_from_bottom;
             if (player.x + 35 < obstacles[i].x + obstacles[i].width && player.x + player.width - 35 > obstacles[i].x &&
-                player.y + 40 < obstacles[i].y + obstacles[i].height && player.y + player.height > obstacles[i].y) {
-                gameState = 'GAMEOVER';
-                liveStats.classList.add('hidden');
-                gameOverScreen.classList.remove('hidden');
-                playerImg.style.display = 'none';
-                document.getElementById('final-grade-text').innerText = Math.floor(score) + "m";
-                document.getElementById('final-score-rank').innerText = getRank(score);
-            }
+                player.y + 40 < obstacleY + obstacles[i].height && player.y + player.height > obstacleY) gameOver();
             if (obstacles[i].x < -300) obstacles.splice(i, 1);
         }
     }
@@ -852,10 +876,11 @@
     window.addEventListener('mousedown', handleAction); 
     window.addEventListener('touchstart', handleAction);
     
+    // --- SMART RESIZE LOGIC ---
     window.addEventListener('resize', () => { 
         canvas.width = window.innerWidth; 
         canvas.height = window.innerHeight; 
-        player.reposition();
+        player.syncPosition();
         if (gameState === 'MENU') draw(); 
     });
     
