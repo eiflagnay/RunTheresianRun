@@ -524,7 +524,7 @@
     const intermissionOverlay = document.getElementById('intermission-overlay');
     const liveStats = document.getElementById('live-stats');
     const scoreVal = document.getElementById('score-val');
-    const countdownEl = document.getElementById('countdown'); // Re-added missing reference
+    const countdownEl = document.getElementById('countdown');
 
     const jumpSound = new Audio(JUMP_SOUND_URL);
     jumpSound.crossOrigin = "anonymous";
@@ -536,11 +536,23 @@
         constructor() { this.reset(); }
         reset() {
             this.width = 100; this.height = 100; this.x = 100;
-            this.y = canvas.height - GROUND_Y_OFFSET - this.height;
             this.vy = 0; this.isJumping = false;
+            this.reposition(); // Sets initial this.y
             playerImg.src = RUN_URL; 
             playerImg.style.display = 'none';
             playerImg.style.width = '100px'; playerImg.style.height = '100px';
+        }
+        reposition() {
+            // Recalculate vertical position relative to canvas height without hiding Ollie
+            const groundY = canvas.height - GROUND_Y_OFFSET - this.height;
+            if (!this.isJumping) {
+                this.y = groundY;
+            } else {
+                // If jumping, keep vertical momentum but adjust ground base
+                // We let update() handle the ground clamping in the next tick
+            }
+            // Force immediate style sync to prevent "off" animation appearance during resize
+            playerImg.style.transform = `translate3d(${Math.round(this.x)}px, ${Math.round(this.y)}px, 0)`;
         }
         jump() {
             if (!this.isJumping && (gameState === 'PLAYING' || gameState === 'INTERMISSION')) {
@@ -588,7 +600,7 @@
 
     const player = new Player();
 
-    // --- UI FUNCTIONS ---
+    // --- INTERFACE FUNCTIONS ---
     window.selectTeam = (teamName, btnElement) => {
         selectedTeam = teamName;
         document.querySelectorAll('.team-btn').forEach(b => b.classList.remove('selected'));
@@ -714,8 +726,11 @@
     };
 
     window.toggleFullScreen = () => {
-        if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
-        else document.exitFullscreen().catch(() => {});
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(() => {});
+        } else {
+            document.exitFullscreen().catch(() => {});
+        }
     };
 
     window.showInstructions = () => { gameState = 'INSTRUCTIONS'; mainMenu.classList.add('hidden'); instructionsScreen.classList.remove('hidden'); };
@@ -841,7 +856,15 @@
     window.addEventListener('keydown', (e) => { if (e.code === 'Space' || e.code === 'ArrowUp') handleAction(); });
     window.addEventListener('mousedown', handleAction); 
     window.addEventListener('touchstart', handleAction);
-    window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; player.reset(); });
+    
+    // --- SMART RESIZE LOGIC ---
+    window.addEventListener('resize', () => { 
+        canvas.width = window.innerWidth; 
+        canvas.height = window.innerHeight; 
+        // Instead of reset(), we just reposition the current character
+        player.reposition();
+        if (gameState === 'MENU') draw(); 
+    });
     
     window.onload = () => { 
         canvas.width = window.innerWidth; 
