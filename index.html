@@ -203,7 +203,6 @@
             z-index: 5;
         }
 
-        /* House Colors */
         .btn-caroline { background-color: #0ea5e9; }
         .btn-catherine { background-color: #eab308; color: #1e293b; }
         .btn-ignatius { background-color: #ef4444; }
@@ -255,7 +254,6 @@
 </head>
 <body>
 
-<!-- Preloader Section -->
 <div style="display:none">
     <img src="https://raw.githubusercontent.com/eiflagnay/RunTheresianRun/refs/heads/main/RunningTheresian.webp" alt="pre">
     <img src="https://raw.githubusercontent.com/eiflagnay/RunTheresianRun/refs/heads/main/JumpTheresianJump.png" alt="pre">
@@ -396,14 +394,14 @@
     </div>
 
     <div class="settings-container" id="global-settings">
-        <div class="audio-toggle" id="toggle-fullscreen-btn" onclick="toggleFullScreen()">
+        <div class="audio-toggle" id="toggle-fullscreen-btn" title="Fullscreen" onclick="toggleFullScreen()">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-sky-600"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
         </div>
-        <div class="audio-toggle" id="toggle-music-btn" onclick="toggleMusic()">
+        <div class="audio-toggle" id="toggle-music-btn" title="Music" onclick="toggleMusic()">
             <svg id="music-on-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-sky-600"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
             <svg id="music-off-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-slate-400 hidden"><line x1="2" y1="2" x2="22" y2="22"></line><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
         </div>
-        <div class="audio-toggle" id="toggle-sfx-btn" onclick="toggleSFX()">
+        <div class="audio-toggle" id="toggle-sfx-btn" title="SFX" onclick="toggleSFX()">
             <svg id="sfx-on-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-sky-600"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
             <svg id="sfx-off-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-slate-400 hidden"><line x1="2" y1="2" x2="22" y2="22"></line><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon></svg>
         </div>
@@ -512,8 +510,8 @@
 
     const RUN_URL = "https://raw.githubusercontent.com/eiflagnay/RunTheresianRun/refs/heads/main/RunningTheresian.webp";
     const JUMP_IMG_URL = "https://raw.githubusercontent.com/eiflagnay/RunTheresianRun/refs/heads/main/JumpTheresianJump.png";
-    const JUMP_SOUND_URL = "https://raw.githubusercontent.com/eiflagnay/RunTheresianRun/main/JumpSFX.wav";
-    const BG_MUSIC_URL = "https://raw.githubusercontent.com/eiflagnay/RunTheresianRun/refs/heads/main/RunOllieRun.mp3";
+    const JUMP_SOUND_URL = "https://raw.githubusercontent.com/eiflagnay/RunTheresianRun/main/Jump.mp3";
+    const BG_MUSIC_URL = "https://raw.githubusercontent.com/eiflagnay/RunTheresianRun/main/KeepRunning.mp3";
 
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
@@ -526,7 +524,7 @@
     const intermissionOverlay = document.getElementById('intermission-overlay');
     const liveStats = document.getElementById('live-stats');
     const scoreVal = document.getElementById('score-val');
-    const countdownEl = document.getElementById('countdown');
+    const countdownEl = document.getElementById('countdown'); // Re-added missing reference
 
     const jumpSound = new Audio(JUMP_SOUND_URL);
     jumpSound.crossOrigin = "anonymous";
@@ -590,7 +588,7 @@
 
     const player = new Player();
 
-    // --- INTERFACE FUNCTIONS ---
+    // --- UI FUNCTIONS ---
     window.selectTeam = (teamName, btnElement) => {
         selectedTeam = teamName;
         document.querySelectorAll('.team-btn').forEach(b => b.classList.remove('selected'));
@@ -638,10 +636,8 @@
         leaderboardScreen.classList.remove('hidden');
         const list = document.getElementById('leaderboard-list');
         list.innerHTML = '<p class="text-slate-400 italic text-center">Fetching standings...</p>';
-
         if (!authReady) await initAuth();
         if (!user) { list.innerHTML = '<p class="text-red-500 text-center text-xs px-4">Error: Server Connection Failed</p>'; return; }
-
         try {
             const teamSnapshot = await getDocs(collection(db, 'artifacts', appIdStr, 'public', 'data', 'teamStats'));
             let teams = [];
@@ -650,11 +646,9 @@
                 if(!teams.find(t => t.id === teamName)) teams.push({ id: teamName, totalDistance: 0 });
             });
             teams.sort((a, b) => (b.totalDistance || 0) - (a.totalDistance || 0));
-
             const runsSnapshot = await getDocs(collection(db, 'artifacts', appIdStr, 'public', 'data', 'runs'));
             let allRuns = [];
             runsSnapshot.forEach(doc => allRuns.push(doc.data()));
-            
             if (allRuns.length > 0) {
                 allRuns.sort((a, b) => (b.distance || 0) - (a.distance || 0));
                 const best = allRuns[0];
@@ -669,7 +663,6 @@
                 document.getElementById('mvp-dist').innerText = "0m";
                 document.getElementById('mvp-card').style.backgroundColor = "#64748b";
             }
-
             list.innerHTML = teams.map((t) => `
                 <div class="leaderboard-row">
                     <span style="color: ${teamColorMap[t.id] || 'inherit'}">${t.id}</span>
@@ -686,23 +679,19 @@
         const name = nameInput ? nameInput.value.trim() : "";
         const btn = document.getElementById('submit-btn');
         const feedback = document.getElementById('submission-feedback');
-
         if (!name || !selectedTeam) {
             feedback.classList.remove('hidden');
             feedback.innerHTML = `<div class="text-red-500 text-xs font-bold">Please enter name and select house!</div>`;
             return;
         }
         if (!authReady) await initAuth();
-
         btn.disabled = true;
         btn.innerText = "SUBMITTING...";
-
         try {
             const teamRef = doc(db, 'artifacts', appIdStr, 'public', 'data', 'teamStats', selectedTeam);
             await setDoc(teamRef, { totalDistance: increment(score) }, { merge: true });
             const runRef = doc(collection(db, 'artifacts', appIdStr, 'public', 'data', 'runs'));
             await setDoc(runRef, { name, team: selectedTeam, distance: score, timestamp: Date.now() });
-
             document.getElementById('submission-form').classList.add('hidden');
             feedback.classList.remove('hidden');
             feedback.innerHTML = `<div class="bg-green-100 text-green-700 p-4 rounded-xl font-bold text-center text-xs">Successfully added to ${selectedTeam}!</div>`;
@@ -737,17 +726,15 @@
         if (['MENU', 'CREDITS', 'INSTRUCTIONS', 'LEADERBOARD', 'GAMEOVER'].includes(gameState)) return;
         const cappedDt = Math.min(dt, 3);
         player.update(cappedDt);
-
         parallaxLayers.forEach(layer => {
             layer.x -= gameSpeed * layer.speed * cappedDt;
             if (layer.x <= -layer.spacing) layer.x += layer.spacing;
         });
-
         if (gameState === 'INTERMISSION') {
             intermissionTimer -= cappedDt;
             const secondsLeft = Math.ceil(intermissionTimer / 60);
-            if (secondsLeft > 0) countdownEl.textContent = `resume running in ${secondsLeft}`;
-            else countdownEl.textContent = "Run!";
+            if (secondsLeft > 0 && countdownEl) countdownEl.textContent = `resume running in ${secondsLeft}`;
+            else if (countdownEl) countdownEl.textContent = "Run!";
             if (intermissionTimer <= 0) { 
                 currentLevel++; gameState = 'PLAYING'; 
                 intermissionOverlay.style.opacity = '0'; 
@@ -755,17 +742,14 @@
             }
             return;
         }
-
         if (score < 400) gameSpeed = 6.0;
         else if (score < 1000) gameSpeed = 8.5;
         else if (score < 2000) gameSpeed = 10.5;
         else if (score < 2400) gameSpeed = 13.0;
         else if (score < 5000) gameSpeed = 14.5;
         else gameSpeed = 16.0 + ((score - 5000) / 1000) * 1.5; 
-
         score += (gameSpeed * 0.15) * cappedDt;
         if (++uiUpdateCounter >= 5) { scoreVal.textContent = getDistanceText(score); uiUpdateCounter = 0; }
-        
         if (currentLevel <= MILESTONES.length) {
             let targetDist = MILESTONES[currentLevel - 1];
             const obstaclesCleared = obstacles.length === 0 || obstacles.every(o => o.x < -150);
@@ -782,7 +766,6 @@
                 return; 
             }
         }
-
         const arrivalPreview = (canvas.width / gameSpeed) * (gameSpeed * 0.15);
         if (score + arrivalPreview >= nextMarkerMetres) {
             if (!(obstacles.length > 0 && obstacles[obstacles.length-1].x > canvas.width - 350)) {
@@ -797,7 +780,6 @@
                 }
             }
         }
-        
         for (let i = obstacles.length - 1; i >= 0; i--) {
             obstacles[i].update(cappedDt);
             if (player.x + 35 < obstacles[i].x + obstacles[i].width && player.x + player.width - 35 > obstacles[i].x &&
