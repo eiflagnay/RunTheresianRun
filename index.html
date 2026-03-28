@@ -82,7 +82,7 @@
         }
 
         @media (max-height: 500px) {
-            .menu-card { padding: 0.75rem 1.5rem; border-radius: 1.5rem; width: 620px !important; }
+            .menu-card { padding: 1rem 1.5rem; border-radius: 1.5rem; width: 520px !important; }
             .menu-content-wrapper { flex-direction: row !important; justify-content: space-between; gap: 1.5rem; text-align: left; }
             .logo-section { flex: 0.8; display: flex; flex-direction: column; align-items: center; justify-content: center; }
             .buttons-section { flex: 1.2; width: 100%; }
@@ -93,7 +93,7 @@
             .stats-container, .settings-container { top: 8px !important; }
             #final-grade-text { font-size: 2rem !important; }
             .team-grid { gap: 0.25rem !important; }
-            .team-btn { padding: 0.25rem !important; font-size: 0.6rem !important; }
+            .team-btn { padding: 0.35rem !important; font-size: 0.6rem !important; }
         }
 
         .btn {
@@ -159,38 +159,48 @@
             padding: 0.6rem 1rem;
             border-radius: 0.75rem;
             border: 2px solid #e2e8f0;
-            margin-bottom: 0.75rem;
+            margin-bottom: 1rem;
             font-family: inherit;
             font-weight: 700;
             outline: none;
             text-align: center;
             color: #1e293b;
+            background-color: #f8fafc;
         }
-        input#player-name:focus { border-color: #0ea5e9; }
+        input#player-name:focus { border-color: #0ea5e9; background-color: #ffffff; }
 
         .team-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(3, 1fr);
             gap: 0.5rem;
             margin-bottom: 1rem;
         }
 
         .team-btn {
-            border: 2px solid transparent;
-            padding: 0.6rem;
+            border: 3px solid transparent;
+            padding: 0.5rem;
             border-radius: 0.75rem;
-            font-weight: 800;
-            font-size: 0.7rem;
+            font-weight: 900;
+            font-size: 0.65rem;
             color: white;
             cursor: pointer;
             transition: all 0.2s;
             text-transform: uppercase;
+            opacity: 0.8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 40px;
         }
 
+        .team-btn:hover { opacity: 1; }
+
         .team-btn.selected {
-            transform: scale(1.05);
-            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            transform: scale(1.08);
+            opacity: 1;
             border-color: #1e293b;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 5;
         }
 
         /* House Colors */
@@ -245,6 +255,12 @@
 </head>
 <body>
 
+<!-- Preloader Section -->
+<div style="display:none">
+    <img src="https://raw.githubusercontent.com/eiflagnay/RunTheresianRun/refs/heads/main/RunningTheresian.webp" alt="pre">
+    <img src="https://raw.githubusercontent.com/eiflagnay/RunTheresianRun/refs/heads/main/JumpTheresianJump.png" alt="pre">
+</div>
+
 <div id="orientation-notice">
     <div class="animate-bounce mb-6">
         <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
@@ -261,6 +277,7 @@
                 <h1 class="text-3xl font-black text-slate-800 mb-1">Run Theresian Run</h1>
                 <p class="text-slate-500 mb-2 italic text-sm">Cross Country Virtual Marathon 2026</p>
                 <div id="loader-text" class="text-sky-600 font-bold animate-pulse mb-4 text-sm text-center">CONNECTING...</div>
+                <div id="auth-error-msg" class="hidden text-red-500 text-xs font-bold mb-4 px-4 text-center">Enable "Anonymous Auth" in Firebase Console!</div>
             </div>
             
             <div id="menu-actions" class="hidden flex flex-col gap-3 w-full buttons-section">
@@ -317,15 +334,17 @@
 <div class="ui-overlay hidden" id="game-over">
     <div class="menu-card">
         <h2 class="text-2xl font-bold text-slate-800 mb-1 text-center">Race Result</h2>
-        <div id="final-grade-container" class="mb-2 text-center">
+        <div id="final-grade-container" class="mb-4 text-center border-b pb-4">
             <p class="text-[10px] text-slate-400 font-bold uppercase mb-1">Final Distance</p>
             <div id="final-grade-text" class="text-5xl font-black mb-1 text-sky-600">0m</div>
             <p class="text-[10px] text-slate-400 font-bold uppercase" id="final-score-rank">Novice</p>
         </div>
 
-        <div id="submission-form" class="border-t pt-3 mt-1">
-            <p class="text-[9px] text-slate-400 font-bold uppercase mb-2 text-center">Submit distance to leaderboard</p>
-            <input type="text" id="player-name" placeholder="Enter Runner Name" maxlength="12">
+        <div id="submission-form">
+            <h3 class="text-lg font-black text-slate-800 mb-1">Choose your house</h3>
+            <p class="text-[10px] text-slate-400 font-bold uppercase mb-4">Pick your house to contribute to the leaderboard</p>
+            
+            <input type="text" id="player-name" placeholder="Runner Name" maxlength="12">
             
             <div class="team-grid">
                 <button class="team-btn btn-caroline" onclick="selectTeam('Caroline', this)">Caroline</button>
@@ -336,12 +355,12 @@
                 <button class="team-btn btn-marie" onclick="selectTeam('Marie', this)">Marie</button>
             </div>
             
-            <button class="btn text-xs py-3 mb-2" id="submit-btn" onclick="submitToLeaderboard()">SUBMIT DISTANCE</button>
+            <button class="btn text-xs py-3 mb-4" id="submit-btn" onclick="submitToLeaderboard()">SUBMIT RECORD</button>
         </div>
 
-        <div id="submission-feedback" class="hidden mb-4"></div>
+        <div id="submission-feedback" class="hidden mb-6"></div>
 
-        <div class="grid grid-cols-2 gap-2 border-t pt-3">
+        <div class="grid grid-cols-2 gap-2 border-t pt-4">
             <button class="btn btn-secondary text-xs py-2" onclick="startGame()">RETRY</button>
             <button class="btn btn-secondary text-xs py-2" onclick="showMainMenu()">MENU</button>
         </div>
@@ -358,14 +377,14 @@
     </div>
 
     <div class="settings-container" id="global-settings">
-        <div class="audio-toggle" id="toggle-fullscreen-btn" title="Fullscreen" onclick="toggleFullScreen()">
+        <div class="audio-toggle" id="toggle-fullscreen-btn" onclick="toggleFullScreen()">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-sky-600"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
         </div>
-        <div class="audio-toggle" id="toggle-music-btn" title="Music" onclick="toggleMusic()">
+        <div class="audio-toggle" id="toggle-music-btn" onclick="toggleMusic()">
             <svg id="music-on-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-sky-600"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
             <svg id="music-off-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-slate-400 hidden"><line x1="2" y1="2" x2="22" y2="22"></line><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
         </div>
-        <div class="audio-toggle" id="toggle-sfx-btn" title="SFX" onclick="toggleSFX()">
+        <div class="audio-toggle" id="toggle-sfx-btn" onclick="toggleSFX()">
             <svg id="sfx-on-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-sky-600"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
             <svg id="sfx-off-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-slate-400 hidden"><line x1="2" y1="2" x2="22" y2="22"></line><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon></svg>
         </div>
@@ -393,7 +412,7 @@
       measurementId: "G-S19F8GMC1Y"
     };
 
-    const finalConfig = (typeof __firebase_config !== 'undefined') ? JSON.parse(__firebase_config) : firebaseConfig;
+    const finalConfig = (typeof __firebase_config !== 'undefined' && __firebase_config !== "") ? JSON.parse(__firebase_config) : firebaseConfig;
     const app = initializeApp(finalConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
@@ -402,7 +421,7 @@
     let user = null;
     let authReady = false;
 
-    // RULE 3 - Initialize Auth FIRST
+    // Authentication Setup
     const initAuth = async () => {
         try {
             if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
@@ -413,6 +432,8 @@
             authReady = true;
         } catch (e) {
             console.error("Auth failed:", e);
+            const errEl = document.getElementById('auth-error-msg');
+            if (errEl) errEl.classList.remove('hidden');
         }
     };
     
@@ -420,12 +441,14 @@
     onAuthStateChanged(auth, u => {
         user = u;
         if (u) {
-            document.getElementById('loader-text').classList.add('hidden'); 
-            document.getElementById('menu-actions').classList.remove('hidden'); 
+            const loader = document.getElementById('loader-text');
+            const actions = document.getElementById('menu-actions');
+            if (loader) loader.classList.add('hidden'); 
+            if (actions) actions.classList.remove('hidden'); 
         }
     });
 
-    // --- GAME UTILITIES ---
+    // --- UTILITIES ---
     const getDistanceText = (dist) => {
         if (dist >= 1000) return (dist / 1000).toFixed(2) + "km";
         return Math.floor(dist) + "m";
@@ -492,7 +515,7 @@
     const bgMusic = new Audio(BG_MUSIC_URL);
     bgMusic.crossOrigin = "anonymous"; bgMusic.loop = true; bgMusic.volume = 0.5;
 
-    // --- CLASSES ---
+    // --- PLAYER CLASS ---
     class Player {
         constructor() { this.reset(); }
         reset() {
@@ -506,7 +529,7 @@
         jump() {
             if (!this.isJumping && (gameState === 'PLAYING' || gameState === 'INTERMISSION')) {
                 this.vy = JUMP_FORCE; this.isJumping = true;
-                playerImg.src = JUMP_IMG_URL;
+                playerImg.src = JUMP_IMG_URL; // Instant source swap
                 if(sfxEnabled) { jumpSound.currentTime = 0; jumpSound.play().catch(()=>{}); }
             }
         }
@@ -517,7 +540,10 @@
             const groundY = canvas.height - GROUND_Y_OFFSET - this.height;
             if (this.y > groundY) {
                 this.y = groundY; this.vy = 0;
-                if (this.isJumping) { this.isJumping = false; playerImg.src = RUN_URL; }
+                if (this.isJumping) {
+                    this.isJumping = false;
+                    playerImg.src = RUN_URL; // Return to run cycle
+                }
             }
             playerImg.style.transform = `translate3d(${Math.round(this.x)}px, ${Math.round(this.y)}px, 0)`;
             if (playerImg.style.display !== 'block' && (gameState === 'PLAYING' || gameState === 'INTERMISSION')) playerImg.style.display = 'block';
@@ -546,7 +572,7 @@
 
     const player = new Player();
 
-    // --- LOGIC FUNCTIONS (Attached to Window for HTML) ---
+    // --- GAME FUNCTIONS (Attached to Window for HTML) ---
     window.startIntermission = () => {
         gameState = 'INTERMISSION'; intermissionTimer = 180; intermissionOverlay.style.opacity = '1';
         let targetDist = MILESTONES[currentLevel - 1];
@@ -586,7 +612,7 @@
         document.getElementById('submission-form').classList.remove('hidden');
         document.getElementById('submission-feedback').classList.add('hidden');
         document.getElementById('submit-btn').disabled = false;
-        document.getElementById('submit-btn').innerText = "SUBMIT DISTANCE";
+        document.getElementById('submit-btn').innerText = "SUBMIT RECORD";
         mainMenu.classList.add('hidden'); instructionsScreen.classList.add('hidden');
         gameOverScreen.classList.add('hidden'); leaderboardScreen.classList.add('hidden');
         liveStats.classList.remove('hidden');
@@ -615,7 +641,7 @@
         list.innerHTML = '<p class="text-slate-400 italic text-center">Fetching standings...</p>';
 
         if (!authReady) await initAuth();
-        if (!user) { list.innerHTML = '<p class="text-red-500 text-center">Error: Login required</p>'; return; }
+        if (!user) { list.innerHTML = '<p class="text-red-500 text-center text-xs px-4">Error: Server Connection Failed</p>'; return; }
 
         try {
             const teamSnapshot = await getDocs(collection(db, 'artifacts', appIdStr, 'public', 'data', 'teamStats'));
@@ -645,14 +671,14 @@
                 document.getElementById('mvp-card').style.backgroundColor = "#64748b";
             }
 
-            list.innerHTML = teams.map((t, idx) => `
+            list.innerHTML = teams.map((t) => `
                 <div class="leaderboard-row">
                     <span style="color: ${teamColorMap[t.id] || 'inherit'}">${t.id}</span>
                     <span>${getDistanceText(t.totalDistance || 0)}</span>
                 </div>
             `).join('');
         } catch (e) {
-            list.innerHTML = `<p class="text-red-500 text-center">Server busy. Try again.</p>`;
+            list.innerHTML = `<p class="text-red-500 text-center text-xs">Server busy. Try again.</p>`;
         }
     };
 
@@ -662,7 +688,11 @@
         const btn = document.getElementById('submit-btn');
         const feedback = document.getElementById('submission-feedback');
 
-        if (!name || !selectedTeam) return;
+        if (!name || !selectedTeam) {
+            feedback.classList.remove('hidden');
+            feedback.innerHTML = `<div class="text-red-500 text-xs font-bold">Please enter name and select house!</div>`;
+            return;
+        }
         if (!authReady) await initAuth();
 
         btn.disabled = true;
@@ -676,7 +706,7 @@
 
             document.getElementById('submission-form').classList.add('hidden');
             feedback.classList.remove('hidden');
-            feedback.innerHTML = `<div class="bg-green-100 text-green-700 p-4 rounded-xl font-bold text-center text-xs">Distance added to ${selectedTeam}!</div>`;
+            feedback.innerHTML = `<div class="bg-green-100 text-green-700 p-4 rounded-xl font-bold text-center text-xs">Successfully added to ${selectedTeam}!</div>`;
         } catch (e) {
             btn.disabled = false; btn.innerText = "RETRY SUBMISSION";
         }
