@@ -216,14 +216,27 @@
             font-size: 0.9rem;
         }
 
-        .best-runner-card {
-            background: #64748b;
+        /* Top 3 UI */
+        .top-runner-card {
             color: white;
-            padding: 1rem;
-            border-radius: 1.25rem;
-            margin-bottom: 1.5rem;
+            padding: 0.75rem 1rem;
+            border-radius: 1rem;
+            margin-bottom: 0.5rem;
             text-align: left;
-            transition: background-color 0.5s ease;
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .top-runner-card.rank-1 { transform: scale(1.02); z-index: 10; margin-bottom: 0.75rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        .rank-badge {
+            background: rgba(255,255,255,0.25);
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 900;
+            text-transform: uppercase;
         }
 
         #orientation-notice {
@@ -274,20 +287,13 @@
 
 <div class="ui-overlay hidden" id="leaderboard-screen">
     <div class="menu-card">
-        <h2 class="text-xl font-black text-slate-800 mb-4 border-b pb-2 text-center uppercase">Marathon Leaders</h2>
-        <div id="best-runner-section">
-            <div class="best-runner-card" id="mvp-card">
-                <p class="text-[10px] font-black uppercase opacity-80 mb-1">Best Runner</p>
-                <div class="flex justify-between items-start">
-                    <div class="flex flex-col">
-                        <span id="mvp-name" class="text-xl font-black">---</span>
-                        <span id="mvp-team" class="text-[10px] font-bold opacity-80 uppercase">No team yet</span>
-                    </div>
-                    <span id="mvp-dist" class="text-sm font-bold bg-white/20 px-2 py-1 rounded-lg">0m</span>
-                </div>
-            </div>
+        <h2 class="text-xl font-black text-slate-800 mb-4 border-b pb-2 text-center uppercase">Individual Top 3</h2>
+        
+        <div id="top-individual-list" class="mb-6">
+            <p class="text-slate-400 italic text-center py-4">Fetching winners...</p>
         </div>
-        <p class="text-[10px] text-slate-400 font-black uppercase mb-2 text-left">Team Standings</p>
+
+        <p class="text-[10px] text-slate-400 font-black uppercase mb-2 text-left">House Standings</p>
         <div id="leaderboard-list" class="mb-6 space-y-2"></div>
         <button class="btn btn-secondary text-sm" onclick="showMainMenu()">BACK</button>
     </div>
@@ -424,14 +430,14 @@
     const GROUND_Y_OFFSET = 120, GRAVITY = 0.65, JUMP_FORCE = -15.5;
     const MILESTONES = [400, 1000, 2000, 2400, 3000];
 
-    // Parallax Logic
+    // Parallax
     let parallaxState = {
         clouds: { x: 0, speed: 0.15, spacing: 600 },
         trees: { x: 0, speed: 0.5, spacing: 450 },
         floor: { x: 0, speed: 1.1, spacing: 120 }
     };
 
-    // DOM References
+    // DOM
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     const playerImg = document.getElementById('player-gif');
@@ -544,7 +550,7 @@
     const player = new Player();
     for(let i=0; i<15; i++) particles.push(new SpeedStreak());
 
-    // --- LOGIC ---
+    // --- INTERFACE ---
     window.startGame = async () => {
         if (!document.fullscreenElement) {
             try {
@@ -561,7 +567,7 @@
         player.reset(); lastTime = performance.now(); nextMarkerMetres = 150;
         globalSettings.classList.add('locked');
         
-        // --- NEW: Reset Submission UI for new round ---
+        // Reset Submission UI
         document.getElementById('submission-form').classList.remove('hidden');
         document.getElementById('submission-feedback').classList.add('hidden');
         document.getElementById('submit-btn').disabled = false;
@@ -586,26 +592,46 @@
         gameState = 'LEADERBOARD';
         mainMenu.classList.add('hidden'); leaderboardScreen.classList.remove('hidden');
         const list = document.getElementById('leaderboard-list');
+        const individualContainer = document.getElementById('top-individual-list');
         list.innerHTML = '<p class="text-slate-400 italic text-center">Fetching standings...</p>';
+        individualContainer.innerHTML = '<p class="text-slate-400 italic text-center py-4">Fetching winners...</p>';
+        
         if (!authReady) await initAuth();
         try {
+            // Team Standings
             const teamSnapshot = await getDocs(collection(db, 'artifacts', appIdStr, 'public', 'data', 'teamStats'));
             let teams = [];
             teamSnapshot.forEach(doc => teams.push({ id: doc.id, ...doc.data() }));
             Object.keys(teamColorMap).forEach(k => { if(!teams.find(t => t.id === k)) teams.push({ id: k, totalDistance: 0 }); });
             teams.sort((a, b) => (b.totalDistance || 0) - (a.totalDistance || 0));
 
+            // Individual Top 3
             const runsSnapshot = await getDocs(collection(db, 'artifacts', appIdStr, 'public', 'data', 'runs'));
             let allRuns = [];
             runsSnapshot.forEach(doc => allRuns.push(doc.data()));
+            
             if (allRuns.length > 0) {
                 allRuns.sort((a, b) => (b.distance || 0) - (a.distance || 0));
-                const best = allRuns[0];
-                document.getElementById('mvp-name').innerText = best.name || "Runner";
-                document.getElementById('mvp-team').innerText = best.team || "---";
-                document.getElementById('mvp-dist').innerText = getDistanceText(best.distance || 0);
-                if (teamColorMap[best.team]) document.getElementById('mvp-card').style.backgroundColor = teamColorMap[best.team];
+                const top3 = allRuns.slice(0, 3);
+                
+                individualContainer.innerHTML = top3.map((best, index) => {
+                    const houseColor = teamColorMap[best.team] || '#64748b';
+                    const rankNum = index + 1;
+                    return `
+                        <div class="top-runner-card rank-${rankNum}" style="background-color: ${houseColor}">
+                            <div class="flex flex-col">
+                                <span class="rank-badge">${rankNum}${rankNum==1?'st':rankNum==2?'nd':'rd'} Place</span>
+                                <span class="text-xl font-black">${best.name || "Runner"}</span>
+                                <span class="text-[10px] font-bold opacity-80 uppercase">${best.team || "No house"}</span>
+                            </div>
+                            <span class="text-lg font-black bg-white/20 px-3 py-1 rounded-lg">${getDistanceText(best.distance || 0)}</span>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                individualContainer.innerHTML = '<p class="text-slate-400 italic text-center py-4">No records yet.</p>';
             }
+
             list.innerHTML = teams.map(t => `
                 <div class="leaderboard-row">
                     <span style="color: ${teamColorMap[t.id] || 'inherit'}">${t.id}</span>
@@ -624,11 +650,10 @@
             await setDoc(doc(db, 'artifacts', appIdStr, 'public', 'data', 'teamStats', selectedTeam), { totalDistance: increment(score) }, { merge: true });
             await setDoc(doc(collection(db, 'artifacts', appIdStr, 'public', 'data', 'runs')), { name, team: selectedTeam, distance: score, timestamp: Date.now() });
             
-            // Hide form and show success
             document.getElementById('submission-form').classList.add('hidden');
             const feedback = document.getElementById('submission-feedback');
             feedback.classList.remove('hidden');
-            feedback.innerHTML = `<div class="bg-green-100 text-green-700 p-4 rounded-xl font-bold text-center text-xs">Record added to ${selectedTeam}!</div>`;
+            feedback.innerHTML = `<div class="bg-green-100 text-green-700 p-4 rounded-xl font-bold text-center text-xs">Successfully added to ${selectedTeam}!</div>`;
         } catch (e) { btn.disabled = false; btn.innerText = "RETRY"; }
     };
 
@@ -693,7 +718,7 @@
         score += (gameSpeed * 0.15) * cappedDt;
         if (++uiUpdateCounter >= 5) { scoreVal.textContent = getDistanceText(score); uiUpdateCounter = 0; }
         
-        // Robust Milestone Trigger
+        // Milestone Trigger
         if (currentLevel <= MILESTONES.length && score >= MILESTONES[currentLevel-1]) {
             gameState = 'INTERMISSION'; 
             intermissionTimer = 180; 
@@ -710,7 +735,7 @@
             return;
         }
 
-        // Dynamic Spawning (Closer together after 3km)
+        // Spawning
         const preview = (canvas.width / gameSpeed) * (gameSpeed * 0.15);
         if (score + preview >= nextMarkerMetres && !obstacles.some(o => o.x > canvas.width - 200)) {
             obstacles.push(new Obstacle(nextMarkerMetres));
@@ -739,16 +764,20 @@
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         const groundY = Math.round(canvas.height - GROUND_Y_OFFSET);
         
-        // Parallax Decor
+        // Clouds
         ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
         for (let x = (parallaxState.clouds.x % parallaxState.clouds.spacing) - parallaxState.clouds.spacing; x < canvas.width + parallaxState.clouds.spacing; x += parallaxState.clouds.spacing) {
             ctx.beginPath(); ctx.arc(x, 100, 25, 0, 7); ctx.arc(x+20, 90, 30, 0, 7); ctx.arc(x+35, 100, 25, 0, 7); ctx.fill();
         }
+
+        // Trees
         for (let x = (parallaxState.trees.x % parallaxState.trees.spacing) - parallaxState.trees.spacing; x < canvas.width + parallaxState.trees.spacing; x += parallaxState.trees.spacing) {
             const rx = Math.round(x);
             ctx.fillStyle = '#78350f'; ctx.fillRect(rx + 10, groundY - 40, 10, 40);
             ctx.fillStyle = '#22c55e'; ctx.beginPath(); ctx.moveTo(rx - 20, groundY - 40); ctx.lineTo(rx + 15, groundY - 80); ctx.lineTo(rx + 50, groundY - 40); ctx.fill();
         }
+
+        // Floor
         ctx.strokeStyle = 'rgba(203, 213, 225, 0.4)'; ctx.lineWidth = 1;
         for (let x = (parallaxState.floor.x % parallaxState.floor.spacing) - parallaxState.floor.spacing; x < canvas.width + parallaxState.floor.spacing; x += parallaxState.floor.spacing) {
             ctx.beginPath(); ctx.moveTo(x, groundY); ctx.lineTo(x - 80, canvas.height); ctx.stroke();
@@ -797,8 +826,7 @@
     });
 
     window.onload = () => { 
-        canvas.width = window.innerWidth; 
-        canvas.height = window.innerHeight; 
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight; 
         player.reset(); checkOrientation(); draw(); 
     };
 </script>
